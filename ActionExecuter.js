@@ -319,19 +319,40 @@ function Action_DailyScheduler() {
     });
   }
 
-  if(matchScheduleItems.length > 0) {
-    resHint += "\n已自動幫您加入以下待辦事項\n";
-    var index = 1;
+  var autoAccountingItems = [];
+  var autoMemoItems = [];
 
-    matchScheduleItems.forEach(function(scheduleItem) {
-      resHint += `${ConvertSymbolDigit(index)} ${scheduleItem.GetFullContent()}`;
-
-      if(index < matchScheduleItems.length)
-        resHint += '\n';
-
+  matchScheduleItems.forEach(function(scheduleItem) {
+    if(IsAccountingScheduleItem(scheduleItem.content)) {
+      var parsed = ParseAccountingScheduleItem(scheduleItem.content);
+      if(parsed != null) {
+        Action_Buy(parsed.name, parsed.amount);
+        autoAccountingItems.push(parsed);
+      } else {
+        Action_AddMemo(scheduleItem.content);
+        autoMemoItems.push(scheduleItem);
+      }
+    } else {
       Action_AddMemo(scheduleItem.content);
+      autoMemoItems.push(scheduleItem);
+    }
+  });
 
-      index++;
+  if(autoMemoItems.length > 0) {
+    resHint += "\n已自動幫您加入以下待辦事項\n";
+    autoMemoItems.forEach(function(scheduleItem, index) {
+      resHint += `${ConvertSymbolDigit(index + 1)} ${scheduleItem.GetFullContent()}`;
+      if(index < autoMemoItems.length - 1)
+        resHint += '\n';
+    });
+  }
+
+  if(autoAccountingItems.length > 0) {
+    resHint += "\n已自動記帳以下項目\n";
+    autoAccountingItems.forEach(function(item, index) {
+      resHint += `${ConvertSymbolDigit(index + 1)} ${item.name} $${item.amount.toLocaleString('en-US')}`;
+      if(index < autoAccountingItems.length - 1)
+        resHint += '\n';
     });
   }
 
@@ -650,3 +671,13 @@ function Action_GetAccountPieChart(command) {
 //TODO : 返回指定月份指定種類的總花費
 //TODO : 返回指定月份預算使用狀況
 //TODO : 返回近N個月預算使用趨勢
+
+function IsAccountingScheduleItem(content) {
+  return content.startsWith("記帳 ");
+}
+
+function ParseAccountingScheduleItem(content) {
+  var match = content.match(/^記帳 (.+?)\((\d+)\$\)/);
+  if(!match) return null;
+  return { name: match[1], amount: parseInt(match[2]) };
+}
