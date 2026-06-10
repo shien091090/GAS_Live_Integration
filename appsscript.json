@@ -1,0 +1,38 @@
+{
+  "timeZone": "Asia/Taipei",
+  "dependencies": {},
+  "webapp": {
+    "executeAs": "USER_DEPLOYING",
+    "access": "ANYONE_ANONYMOUS"
+  },
+  "exceptionLogging": "STACKDRIVER",
+  "runtimeVersion": "V8",
+  "sheets": {
+    "macros": [
+      {
+        "menuName": "未命名巨集",
+        "functionName": "myFunction"
+      },
+      {
+        "menuName": "未命名巨集",
+        "functionName": "myFunction"
+      },
+      {
+        "menuName": "未命名巨集",
+        "functionName": "myFunction"
+      },
+      {
+        "menuName": "未命名巨集",
+        "functionName": "myFunction"
+      },
+      {
+        "menuName": "未命名巨集",
+        "functionName": "myFunction"
+      },
+      {
+        "menuName": "未命名巨集",
+        "functionName": "myFunction"
+      }
+    ]
+  }
+}
