@@ -1,4 +1,4 @@
-const Test = '123';
+const Test = '000';
 const IS_AUTO_SET_DATE = true;
 const SHEET_NAME_ACCOUNTING = '記帳';
 const SHEET_NAME_DAILY_MEMO = '每日待辦事項'
