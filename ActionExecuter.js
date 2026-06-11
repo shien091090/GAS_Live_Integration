@@ -323,7 +323,7 @@ function Action_DailyScheduler() {
     if(IsAccountingScheduleItem(scheduleItem.content)) {
       var parsed = ParseAccountingScheduleItem(scheduleItem.content);
       if(parsed != null) {
-        Action_Buy(parsed.name, parsed.amount);
+        Action_Buy(parsed.name, parsed.amount, parsed.category);
         autoAccountingItems.push(parsed);
       } else {
         Action_AddMemo(scheduleItem.content);
@@ -675,7 +675,7 @@ function IsAccountingScheduleItem(content) {
 }
 
 function ParseAccountingScheduleItem(content) {
-  var match = content.match(/^記帳 (.+?)\((\d+)\$\)/);
+  var match = content.match(/^記帳 (.+?)\((\$\d+|\d+\$)\)(?:\((.+?)\))?$/);
   if(!match) return null;
-  return { name: match[1], amount: parseInt(match[2]) };
+  return { name: match[1], amount: parseInt(match[2].replace('$', '')), category: match[3] || '' };
 }
