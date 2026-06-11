@@ -377,3 +377,8 @@ function TestStringForamt() {
   var t = ConvertTextFormat("a", params);
   console.log(t);
 }
+
+function TestIsAccountingScheduleItem() {
+  var s = "記帳 PixelLabT1訂閱($398)";
+  console.log(IsAccountingScheduleItem(s));
+}
