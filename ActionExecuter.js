@@ -297,9 +297,6 @@ function Action_DailyScheduler() {
   var formatDateTxt = Utilities.formatDate(now, "GMT+8", `yyyy/M/d(${localWeekTxt})`)
   var resHint = `${formatDateTxt}\n『再不用心，老婆就要變心』`;
 
- // var greetingMsg = RequestChatGPT("給我一個開啟今日新的一天的祝賀語");
- // resHint += `\n${greetingMsg}`;
-
   var currentScheduleItems = GetSpecificCurrentSheetItems(SHEET_ITEM_TYPE.ScheduleItem);
   var matchScheduleItems = [];
 
@@ -338,6 +335,7 @@ function Action_DailyScheduler() {
     }
   });
 
+  resHint += `\n autoMemoItems.length:${autoMemoItems.length}, autoAccountingItems.length:${autoAccountingItems.length}\n`;
   if(autoMemoItems.length > 0) {
     resHint += "\n已自動幫您加入以下待辦事項\n";
     autoMemoItems.forEach(function(scheduleItem, index) {
