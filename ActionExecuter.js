@@ -335,7 +335,6 @@ function Action_DailyScheduler() {
     }
   });
 
-  resHint += `\n autoMemoItems.length:${autoMemoItems.length}, autoAccountingItems.length:${autoAccountingItems.length}\n`;
   if(autoMemoItems.length > 0) {
     resHint += "\n已自動幫您加入以下待辦事項\n";
     autoMemoItems.forEach(function(scheduleItem, index) {
