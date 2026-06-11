@@ -63,6 +63,60 @@ function Action_RemoveMemo(numberText) {
     MESSAGE_TYPE_TEXT);
 }
 
+//刪除複數待辦事項
+function Action_RemoveMultipleMemo(numbersText) {
+  var removeNumbers = [];
+
+  if(numbersText.indexOf('~') !== -1) {
+    var parts = numbersText.split('~');
+    var start = parseInt(parts[0]);
+    var end = parseInt(parts[1]);
+    if(isNaN(start) || isNaN(end) || start > end)
+      return new ServerResponse(STATUS_CODE_INVALID, '【格式錯誤】範圍格式應為 起始數字~結束數字', ' ', MESSAGE_TYPE_TEXT);
+    for(var i = start; i <= end; i++)
+      removeNumbers.push(i);
+  } else {
+    numbersText.split(/[\/.,]/).forEach(function(p) {
+      var n = parseInt(p);
+      if(!isNaN(n)) removeNumbers.push(n);
+    });
+  }
+
+  removeNumbers = [...new Set(removeNumbers)].sort(function(a, b) { return a - b; });
+
+  var oldMemoItems = GetSpecificCurrentSheetItems(SHEET_ITEM_TYPE.DailyMemoItem);
+
+  if(oldMemoItems.length <= 0)
+    return new ServerResponse(STATUS_CODE_INVALID, GetTextTableValue(TEXT_TABLE_KEY_REMOVE_MEMO_EMPTY), '(空)', MESSAGE_TYPE_TEXT);
+
+  var validRemoveNumbers = removeNumbers.filter(function(n) { return n >= 1 && n <= oldMemoItems.length; });
+
+  if(validRemoveNumbers.length === 0)
+    return new ServerResponse(STATUS_CODE_INVALID, ConvertTextFormat(TEXT_TABLE_KEY_REMOVE_MEMO_INVALID_NUMBER, [oldMemoItems.length]), ' ', MESSAGE_TYPE_TEXT);
+
+  var removedItems = [];
+  var newMemoItems = [];
+  oldMemoItems.forEach(function(memoItem) {
+    if(validRemoveNumbers.includes(memoItem.number))
+      removedItems.push(memoItem);
+    else
+      newMemoItems.push(memoItem);
+  });
+
+  if(newMemoItems.length > 0)
+    SortAndUpdateSheetItems(newMemoItems, SHEET_ITEM_TYPE.DailyMemoItem);
+
+  AddItemToSheet(SHEET_NAME_DAILY_MEMO, newMemoItems, SHEET_ITEM_TYPE.DailyMemoItem, COLUMN_SETTING_DAILY_MEMO.MemoItemId);
+
+  var currentMemoItems = GetSpecificCurrentSheetItems(SHEET_ITEM_TYPE.DailyMemoItem);
+  var replyContent = currentMemoItems.length <= 0 ? '(空)' : GetSheetItemsText(SHEET_ITEM_TYPE.DailyMemoItem);
+
+  var removedNames = removedItems.map(function(item, i) { return `${ConvertSymbolDigit(i + 1)} ${item.content}`; }).join('\n');
+  var statusMsg = `已刪除以下${removedItems.length}筆待辦事項\n${removedNames}`;
+
+  return new ServerResponse(STATUS_CODE_SUCCESS, statusMsg, replyContent, MESSAGE_TYPE_TEXT);
+}
+
 //修改待辦事項
 function Action_ModifyMemo(numberText, newMemoContent) {
   var modifyNumber = parseInt(numberText);

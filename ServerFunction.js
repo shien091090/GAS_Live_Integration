@@ -4,6 +4,7 @@ const STATUS_CODE_INVALID = 301
 
 const ACTION_MEMO_ADD = 'action_memo_add'
 const ACTION_MEMO_REMOVE = 'action_memo_remove'
+const ACTION_MEMO_REMOVE_MULTIPLE = 'action_memo_remove_multiple'
 const ACTION_MEMO_MODIFY = 'action_memo_modify'
 const ACTION_MEMO_GET = 'action_memo_get'
 const ACTION_SCHEDULE_ADD = 'action_schedule_add'
@@ -34,6 +35,10 @@ function doGet(e) {
 
     case ACTION_MEMO_REMOVE:
       res = Action_RemoveMemo(param.number);
+      break;
+
+    case ACTION_MEMO_REMOVE_MULTIPLE:
+      res = Action_RemoveMultipleMemo(param.numbers);
       break;
 
     case ACTION_MEMO_MODIFY:
