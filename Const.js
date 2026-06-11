@@ -1,3 +1,27 @@
+const STATUS_CODE_SUCCESS = 200
+const STATUS_CODE_EMPTY_INPUT = 300
+const STATUS_CODE_INVALID = 301
+
+const ACTION_MEMO_ADD = 'action_memo_add'
+const ACTION_MEMO_REMOVE = 'action_memo_remove'
+const ACTION_MEMO_REMOVE_MULTIPLE = 'action_memo_remove_multiple'
+const ACTION_MEMO_MODIFY = 'action_memo_modify'
+const ACTION_MEMO_GET = 'action_memo_get'
+const ACTION_SCHEDULE_ADD = 'action_schedule_add'
+const ACTION_SCHEDULE_REMOVE = 'action_schedule_remove'
+const ACTION_SCHEDULE_MODIFY = 'action_schedule_modify'
+const ACTION_SCHEDULE_GET = 'action_schedule_get'
+const ACTION_DAILY_SCHEDULER = 'action_daily_scheduler'
+const ACTION_BUY = 'action_buy'
+const ACTION_BUY_WITH_BUDGET_TYPE = 'action_buy_with_budget_type'
+const ACTION_GET_TOTAL_COST_BY_MONTH = 'action_get_total_cost_by_month'
+const ACTION_GET_CHART = 'action_get_chart'
+const ACTION_RECORD_BABY_DIAPER_CHANGING_TIME = 'action_record_baby_diaper_changing_time'
+const ACTION_RECORD_BABY_EAT_TIME = 'action_record_baby_eat_time'
+
+const MESSAGE_TYPE_TEXT = 'text'
+const MESSAGE_TYPE_CHART = 'chart'
+
 const IS_AUTO_SET_DATE = true;
 const SHEET_NAME_ACCOUNTING = '記帳';
 const SHEET_NAME_DAILY_MEMO = '每日待辦事項'
