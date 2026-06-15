@@ -166,22 +166,12 @@ function SortMemoItems(memoItems) {
 //排序週期行程清單
 function SortScheduleItems(scheduleItems) {
   scheduleItems.sort(function(s1, s2) {
-    var s1TypeNameValue = 0;
-    var s2TypeNameValue = 0;
-    var sortKeyWords = Object.getOwnPropertyNames(SCHEDULE_TYPE);
-    sortKeyWords.forEach(function(keyWord) {
-      if(String(s1.content).indexOf(keyWord) == 0)
-        s1TypeNameValue = SCHEDULE_TYPE[keyWord];
+    var s1TypeValue = SCHEDULE_TYPE[s1.scheduleType] || 0;
+    var s2TypeValue = SCHEDULE_TYPE[s2.scheduleType] || 0;
 
-      if(String(s2.content).indexOf(keyWord) == 0)
-        s2TypeNameValue = SCHEDULE_TYPE[keyWord];
-    });
+    if(s1TypeValue !== s2TypeValue)
+      return s2TypeValue - s1TypeValue;
 
-    if(s1TypeNameValue > s2TypeNameValue)
-      return -1;
-    else if(s1TypeNameValue < s2TypeNameValue)
-      return 1;
-    else if(s1TypeNameValue == s2TypeNameValue && s1TypeNameValue != 0)
-      return 0;
+    return parseInt(s1.scheduleValue) - parseInt(s2.scheduleValue);
   });
 }
