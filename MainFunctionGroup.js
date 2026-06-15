@@ -86,6 +86,10 @@ function GetValidScheduleValueRange(scheduleTypeName) {
     case "每天":
       validRange = [0, 999];
       break;
+
+    case "每年":
+      validRange = [1, 12];
+      break;
   }
 
   return validRange;

@@ -362,6 +362,7 @@ function Action_DailyScheduler() {
   if(currentScheduleItems.length > 0) {
     var currentDay = now.getDate();
     var currentWeekNumber = parseInt(now.getDay());
+    var currentMonth = now.getMonth() + 1;
 
     currentScheduleItems.forEach(function(scheduleItem) {
       if(CheckScheduleTypeIsValid(scheduleItem.scheduleType)) {
@@ -370,6 +371,8 @@ function Action_DailyScheduler() {
         else if(scheduleItem.scheduleType == "每週" && currentWeekNumber == scheduleItem.scheduleValue)
           matchScheduleItems.push(scheduleItem);
         else if(scheduleItem.scheduleType == "每月" && currentDay == scheduleItem.scheduleValue)
+          matchScheduleItems.push(scheduleItem);
+        else if(scheduleItem.scheduleType == "每年" && currentDay == 1 && currentMonth == scheduleItem.scheduleValue)
           matchScheduleItems.push(scheduleItem);
       }
     });

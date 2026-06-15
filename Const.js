@@ -95,7 +95,8 @@ const SHEET_ITEM_TYPE = Object.freeze({
 const SCHEDULE_TYPE = Object.freeze({
   '每月':1,
   '每週':2,
-  '每天':3
+  '每天':3,
+  '每年':4
 });
 
 const DIRECTION_CHANGE_TYPE = Object.freeze({

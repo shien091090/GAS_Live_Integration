@@ -46,6 +46,8 @@ class ScheduleElement {
       else
         return `每週 禮拜${ConvertChineseNumber(this.scheduleValue)} ${this.content}`;
     }
+    else if(this.scheduleType == "每年")
+      return `每年 ${this.scheduleValue}月1號 ${this.content}`;
     else
       return `${this.scheduleType} ${this.scheduleValue}號 ${this.content}`;
   }
