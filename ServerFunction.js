@@ -46,6 +46,10 @@ function doGet(e) {
       res = Action_DailyScheduler();
       break;
 
+    case ACTION_GET_ACCOUNTING_ITEMS:
+      res = Action_GetAccountingItems(param.startDate, param.endDate, param.budgetTypes);
+      break;
+
     case ACTION_BUY:
       res = Action_Buy(param.subContent, param.number);
       break;

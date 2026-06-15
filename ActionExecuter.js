@@ -475,6 +475,53 @@ function Action_Buy(accountItemName, numberText, budgetType = '') {
     MESSAGE_TYPE_TEXT);
 }
 
+//取得記帳項目列表（可選：起始日期、結束日期、分類）
+function Action_GetAccountingItems(startDateStr, endDateStr, budgetTypesStr) {
+  var targetSheet = SpreadsheetApp.getActive().getSheetByName(SHEET_NAME_ACCOUNTING);
+  var lastRow = targetSheet.getLastRow();
+
+  if(lastRow < 2)
+    return new ServerResponse(STATUS_CODE_SUCCESS, 'success', JSON.stringify([]), MESSAGE_TYPE_TEXT);
+
+  var startDate = (startDateStr && startDateStr != '') ? new Date(startDateStr) : null;
+  var endDate = null;
+  if(endDateStr && endDateStr != '') {
+    endDate = new Date(endDateStr);
+    endDate.setHours(23, 59, 59, 999);
+  }
+
+  var budgetTypes = [];
+  if(budgetTypesStr && budgetTypesStr.trim() != '')
+    budgetTypes = budgetTypesStr.split(',').map(function(s) { return s.trim(); }).filter(function(s) { return s != ''; });
+
+  var dataRange = targetSheet.getRange(2, 1, lastRow - 1, 5);
+  var values = dataRange.getValues();
+
+  var results = [];
+  values.forEach(function(row) {
+    var date = row[COLUMN_SETTING_ACCOUNTING.Date - 1];
+    var content = row[COLUMN_SETTING_ACCOUNTING.AccountingContent - 1];
+    var prize = row[COLUMN_SETTING_ACCOUNTING.Prize - 1];
+    var budgetType = row[COLUMN_SETTING_ACCOUNTING.BudgetType - 1];
+
+    if(content === '' || date === '') return;
+
+    var rowDate = new Date(date);
+    if(startDate && rowDate < startDate) return;
+    if(endDate && rowDate > endDate) return;
+    if(budgetTypes.length > 0 && !budgetTypes.includes(String(budgetType))) return;
+
+    results.push({
+      date: Utilities.formatDate(rowDate, "GMT+8", "yyyy/MM/dd"),
+      content: String(content),
+      prize: parseInt(prize) || 0,
+      budgetType: String(budgetType)
+    });
+  });
+
+  return new ServerResponse(STATUS_CODE_SUCCESS, 'success', JSON.stringify(results), MESSAGE_TYPE_TEXT);
+}
+
 //取得分析圖表
 function Action_GetChart(command, chartType) {
   
