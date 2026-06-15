@@ -329,7 +329,12 @@ function Action_GetSchedule() {
       '(空)',
       MESSAGE_TYPE_TEXT);
 
-  var replyContent = GetSheetItemsText(SHEET_ITEM_TYPE.ScheduleItem);
+  SortScheduleItems(currentScheduleItems);
+  var replyContent = '';
+  currentScheduleItems.forEach(function(item, index) {
+    replyContent += `${index + 1}. ${item.GetFullContent()}\n`;
+  });
+
   return new ServerResponse(
     STATUS_CODE_SUCCESS,
     GetTextTableValue(TEXT_TABLE_KEY_GET_SCHEDULE_SUCCESS),
