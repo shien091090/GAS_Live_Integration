@@ -105,4 +105,15 @@ const DIRECTION_CHANGE_TYPE = Object.freeze({
   '從下到上':2
 });
 
+const SHEET_NAME_BUY_REMINDER_CONFIG = '記帳接待辦自動化設定';
+
+const COLUMN_SETTING_BUY_REMINDER_CONFIG = Object.freeze({
+  DisplayName: 1,
+  Keywords: 2,
+  BaseUnit: 3,
+  DaysPerUnit: 4,
+  DefaultQuantity: 5,
+  IsEnabled: 6
+});
+
 

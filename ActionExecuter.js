@@ -466,7 +466,8 @@ function Action_Buy(accountItemName, numberText, budgetType = '') {
   var accountSuccessText = ConvertTextFormat(TEXT_TABLE_KEY_BUY_SUCCESS, [accountItemName, prize]);
   var dailyTotalText = ConvertTextFormat(TEXT_TABLE_KEY_ACCOUNTING_DAILY_TOTAL, [dailyTotal]);
   var monthlyTotalText = ConvertTextFormat(TEXT_TABLE_KEY_ACCOUNTING_MONTHLY_TOTAL, [monthlyTotal]);
-  var resultReplyText = `${accountSuccessText}\n${dailyTotalText}\n${monthlyTotalText}`;
+  var reminderNote = CheckAndAddBuyReminder(accountItemName);
+  var resultReplyText = `${accountSuccessText}\n${dailyTotalText}\n${monthlyTotalText}${reminderNote}`;
 
   return new ServerResponse(
     STATUS_CODE_SUCCESS,
