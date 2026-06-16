@@ -387,3 +387,33 @@ function TestIsAccountingScheduleItem() {
   var s = "記帳 PixelLabT1訂閱($398)";
   console.log(IsAccountingScheduleItem(s));
 }
+
+function TestGetBuyReminderConfigs() {
+  var configs = GetBuyReminderConfigs();
+  console.log('configs count: ' + configs.length);
+  configs.forEach(function(c, i) {
+    console.log('[' + i + '] displayName=' + c.displayName
+      + ', keywords=' + c.keywords.join('|')
+      + ', baseUnit=' + c.baseUnit
+      + ', daysPerUnit=' + c.daysPerUnit
+      + ', defaultQuantity=' + c.defaultQuantity);
+  });
+}
+
+function TestParseBuyReminderQuantity() {
+  var cases = [
+    { desc: '安養快*28顆',       unit: '顆', expect: 28  },
+    { desc: '安癢快×12顆',       unit: '顆', expect: 12  },
+    { desc: '安養快16mg*56顆',   unit: '顆', expect: 56  },
+    { desc: '3箱*5包*30片',      unit: '片', expect: 450 },
+    { desc: '3箱*5包*30片',      unit: '包', expect: 15  },
+    { desc: '璇璇乳液*2瓶',      unit: '瓶', expect: 2   },
+    { desc: '安養快',            unit: '顆', expect: null },
+  ];
+  cases.forEach(function(c) {
+    var result = ParseQuantityFromDescription(c.desc, c.unit);
+    var pass = result === c.expect;
+    console.log((pass ? '[OK]' : '[NG]') + ' desc="' + c.desc + '" unit=' + c.unit
+      + ' => ' + result + ' (expect=' + c.expect + ')');
+  });
+}

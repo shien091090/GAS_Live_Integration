@@ -69,6 +69,10 @@ function doGet(e) {
     case ACTION_GET_CHART:
       res = Action_GetChart(param.subContent, param.additionalContent);
       break;
+
+    case 'action_debug_buy_reminder':
+      res = new ServerResponse(STATUS_CODE_SUCCESS, 'debug', JSON.stringify(GetBuyReminderConfigs()), MESSAGE_TYPE_TEXT);
+      break;
   }
 
 
