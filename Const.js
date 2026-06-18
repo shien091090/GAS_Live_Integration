@@ -117,4 +117,21 @@ const COLUMN_SETTING_BUY_REMINDER_CONFIG = Object.freeze({
   IsEnabled: 6
 });
 
+const SHEET_NAME_BUDGET_SETTING = '預算設定'
+
+const COLUMN_SETTING_BUDGET_SETTING = Object.freeze({
+  BudgetType: 1,
+  MonthlyAmount: 2,
+  SpecialMonth1: 3,
+  SpecialAmount1: 4,
+  SpecialMonth2: 5,
+  SpecialAmount2: 6,
+  SpecialMonth3: 7,
+  SpecialAmount3: 8,
+  SpecialMonth4: 9,
+  SpecialAmount4: 10,
+  SpecialMonth5: 11,
+  SpecialAmount5: 12,
+})
+
 

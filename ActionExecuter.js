@@ -476,38 +476,15 @@ function Action_Buy(accountItemName, numberText, budgetType = '') {
   var prize = parseInt(numberText);
   KeepAccount(accountItemName, prize, budgetType);
 
-  var targetSheet = SpreadsheetApp.getActive().getSheetByName(SHEET_NAME_ACCOUNTING);
-  var dailyMatchRanges = GetCellsFromSearchMatchSpecificColumnValue(SHEET_NAME_ACCOUNTING, DIRECTION_CHANGE_TYPE.從下到上, COLUMN_SETTING_ACCOUNTING.Date);
-  var dailyTotal = 0;
-  if(dailyMatchRanges.length > 0)
-  {
-    var startRow = dailyMatchRanges[0].getRow();
-    var endRow = dailyMatchRanges[dailyMatchRanges.length - 1].getRow();
-    var values = targetSheet.getRange(startRow, COLUMN_SETTING_ACCOUNTING.Prize, endRow - startRow + 1).getValues();
-    
-    values.forEach(function(v) {
-      dailyTotal += parseInt(v);
-    });
-  }
-
-  var monthMatchRanges = GetCellsFromSearchMatchSpecificMonthValue(SHEET_NAME_ACCOUNTING, DIRECTION_CHANGE_TYPE.從下到上, COLUMN_SETTING_ACCOUNTING.Date);
-  var monthlyTotal = 0;
-  if(monthMatchRanges.length > 0)
-  {
-    var startRow = monthMatchRanges[0].getRow();
-    var endRow = monthMatchRanges[monthMatchRanges.length - 1].getRow();
-    var values = targetSheet.getRange(startRow, COLUMN_SETTING_ACCOUNTING.Prize, endRow - startRow + 1).getValues();
-    
-    values.forEach(function(v) {
-      monthlyTotal += parseInt(v);
-    });
-  }
-
   var accountSuccessText = ConvertTextFormat(TEXT_TABLE_KEY_BUY_SUCCESS, [accountItemName, prize]);
-  var dailyTotalText = ConvertTextFormat(TEXT_TABLE_KEY_ACCOUNTING_DAILY_TOTAL, [dailyTotal]);
-  var monthlyTotalText = ConvertTextFormat(TEXT_TABLE_KEY_ACCOUNTING_MONTHLY_TOTAL, [monthlyTotal]);
   var reminderNote = CheckAndAddBuyReminder(accountItemName);
-  var resultReplyText = `${accountSuccessText}\n${dailyTotalText}\n${monthlyTotalText}${reminderNote}`;
+  var progressBar = GetBudgetProgressBar(budgetType);
+
+  var resultReplyText = accountSuccessText;
+  if (progressBar !== '') {
+    resultReplyText += '\n' + progressBar;
+  }
+  resultReplyText += reminderNote;
 
   return new ServerResponse(
     STATUS_CODE_SUCCESS,
