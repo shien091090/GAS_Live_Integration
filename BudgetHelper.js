@@ -69,7 +69,15 @@ function GetBudgetProgressBar(budgetType) {
   var emptyCount = 10 - filledCount;
   var percentage = Math.floor(ratio * 100);
 
-  var bar = '■'.repeat(filledCount) + '□'.repeat(emptyCount);
+  var filledEmoji;
+  if (percentage < 70) {
+    filledEmoji = '🟢';
+  } else if (percentage < 90) {
+    filledEmoji = '🟡';
+  } else {
+    filledEmoji = '🔴';
+  }
+  var bar = filledEmoji.repeat(filledCount) + '⚫'.repeat(emptyCount);
   var result = bar + ' ' + monthlySpent.toLocaleString('en-US') + '$/' + effectiveBudget.toLocaleString('en-US') + '$ (' + percentage + '%)';
 
   if (monthlySpent > effectiveBudget) {
