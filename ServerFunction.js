@@ -22,6 +22,10 @@ function doGet(e) {
       res = Action_ModifyMemo(param.number, param.subContent);
       break;
 
+    case ACTION_MEMO_EXTEND:
+      res = Action_ExtendMemo(param.number, param.subContent);
+      break;
+
     case ACTION_MEMO_GET:
       res = Action_GetMemo();
       break;

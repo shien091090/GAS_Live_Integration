@@ -158,6 +158,46 @@ function Action_ModifyMemo(numberText, newMemoContent) {
 
 }
 
+//延伸待辦事項
+function Action_ExtendMemo(numberText, appendContent) {
+  var extendNumber = parseInt(numberText);
+  var currentMemoItems = GetSpecificCurrentSheetItems(SHEET_ITEM_TYPE.DailyMemoItem);
+
+  if(currentMemoItems.length <= 0)
+    return new ServerResponse(
+      STATUS_CODE_INVALID,
+      GetTextTableValue(TEXT_TABLE_KEY_MODIFY_MEMO_EMPTY),
+      '(空)',
+      MESSAGE_TYPE_TEXT);
+
+  if(extendNumber <= 0 || extendNumber > currentMemoItems.length)
+    return new ServerResponse(
+      STATUS_CODE_INVALID,
+      ConvertTextFormat(TEXT_TABLE_KEY_MODIFY_MEMO_INVALID_NUMBER, [currentMemoItems.length]),
+      ' ',
+      MESSAGE_TYPE_TEXT);
+
+  var originContent = '';
+  var newContent = '';
+  currentMemoItems.forEach(function(memoItem) {
+    if(memoItem.number == extendNumber) {
+      originContent = memoItem.content;
+      newContent = originContent + appendContent;
+      memoItem.content = newContent;
+    }
+  });
+
+  SortAndUpdateSheetItems(currentMemoItems, SHEET_ITEM_TYPE.DailyMemoItem);
+  AddItemToSheet(SHEET_NAME_DAILY_MEMO, currentMemoItems, SHEET_ITEM_TYPE.DailyMemoItem, COLUMN_SETTING_DAILY_MEMO.MemoItemId);
+
+  var replyContent = GetSheetItemsText(SHEET_ITEM_TYPE.DailyMemoItem);
+  return new ServerResponse(
+    STATUS_CODE_SUCCESS,
+    `已延伸第${ConvertSymbolDigit(extendNumber)}項\n${originContent}\n→ ${newContent}`,
+    replyContent,
+    MESSAGE_TYPE_TEXT);
+}
+
 //確認待辦事項
 function Action_GetMemo() {
   var currentMemoItems = GetSpecificCurrentSheetItems(SHEET_ITEM_TYPE.DailyMemoItem);
