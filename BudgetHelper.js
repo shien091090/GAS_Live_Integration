@@ -19,8 +19,6 @@ function GetBudgetProgressBar(budgetType) {
   if (!budgetRow) return '';
 
   var baseBudget = parseInt(budgetRow[COLUMN_SETTING_BUDGET_SETTING.MonthlyAmount - 1]) || 0;
-  if (baseBudget <= 0) return '';
-
   var currentMonth = new Date().getMonth() + 1;
   var effectiveBudget = baseBudget;
 
@@ -39,6 +37,8 @@ function GetBudgetProgressBar(budgetType) {
       effectiveBudget += parseInt(specialAmount) || 0;
     }
   });
+
+  if (effectiveBudget <= 0) return '';
 
   var accountingSheet = SpreadsheetApp.getActive().getSheetByName(SHEET_NAME_ACCOUNTING);
   var accountingLastRow = accountingSheet.getLastRow();
