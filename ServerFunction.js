@@ -74,6 +74,10 @@ function doGet(e) {
       res = Action_GetChart(param.subContent, param.additionalContent);
       break;
 
+    case ACTION_GET_PREPARATION_LIST:
+      res = Action_GetPreparationList();
+      break;
+
     case 'action_debug_buy_reminder':
       res = new ServerResponse(STATUS_CODE_SUCCESS, 'debug', JSON.stringify(GetBuyReminderConfigs()), MESSAGE_TYPE_TEXT);
       break;

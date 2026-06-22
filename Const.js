@@ -18,6 +18,7 @@ const ACTION_BUY = 'action_buy'
 const ACTION_BUY_WITH_BUDGET_TYPE = 'action_buy_with_budget_type'
 const ACTION_GET_TOTAL_COST_BY_MONTH = 'action_get_total_cost_by_month'
 const ACTION_GET_CHART = 'action_get_chart'
+const ACTION_GET_PREPARATION_LIST = 'action_get_preparation_list'
 const ACTION_RECORD_BABY_DIAPER_CHANGING_TIME = 'action_record_baby_diaper_changing_time'
 const ACTION_RECORD_BABY_EAT_TIME = 'action_record_baby_eat_time'
 
@@ -118,6 +119,7 @@ const COLUMN_SETTING_BUY_REMINDER_CONFIG = Object.freeze({
 });
 
 const SHEET_NAME_BUDGET_SETTING = '預算設定'
+const SHEET_NAME_PREPARATION_LIST = '物品準備清單'
 
 const COLUMN_SETTING_BUDGET_SETTING = Object.freeze({
   BudgetType: 1,

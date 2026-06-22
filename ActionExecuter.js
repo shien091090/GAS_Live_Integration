@@ -682,6 +682,38 @@ function Action_GetAccountPieChart(command) {
 //TODO : 返回指定月份預算使用狀況
 //TODO : 返回近N個月預算使用趨勢
 
+// 取得物品準備清單
+function Action_GetPreparationList() {
+  var sheet = SpreadsheetApp.getActive().getSheetByName(SHEET_NAME_PREPARATION_LIST);
+  if (!sheet)
+    return new ServerResponse(STATUS_CODE_INVALID, '找不到物品準備清單', '', MESSAGE_TYPE_TEXT);
+
+  var lastRow = sheet.getLastRow();
+  if (lastRow < 2)
+    return new ServerResponse(STATUS_CODE_SUCCESS, '物品準備清單', '(空)', MESSAGE_TYPE_TEXT);
+
+  var data = sheet.getRange(2, 1, lastRow - 1, 3).getValues();
+  var resultText = '';
+
+  data.forEach(function(row, index) {
+    var name = String(row[0]).trim();
+    var attribute = String(row[1]).trim();
+    var condition = String(row[2]).trim();
+
+    if (name === '') return;
+
+    resultText += `${index + 1}. ${name}`;
+    if (attribute !== '') resultText += `（${attribute}）`;
+    if (condition !== '') resultText += `，${condition}`;
+    resultText += '\n';
+  });
+
+  if (resultText === '')
+    return new ServerResponse(STATUS_CODE_SUCCESS, '物品準備清單', '(空)', MESSAGE_TYPE_TEXT);
+
+  return new ServerResponse(STATUS_CODE_SUCCESS, '物品準備清單', resultText.trim(), MESSAGE_TYPE_TEXT);
+}
+
 function IsAccountingScheduleItem(content) {
   return content.startsWith("記帳 ");
 }
