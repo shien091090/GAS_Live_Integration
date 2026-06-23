@@ -84,6 +84,9 @@ function doGet(e) {
   }
 
 
+  if (param.format === 'text')
+    return ContentService.createTextOutput(res.responseMsg || '').setMimeType(ContentService.MimeType.TEXT);
+
   return ContentService.createTextOutput(JSON.stringify(res));
 
 }
