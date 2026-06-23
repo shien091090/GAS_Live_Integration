@@ -682,10 +682,20 @@ function Action_GetAccountPieChart(command) {
 //TODO : 返回指定月份預算使用狀況
 //TODO : 返回近N個月預算使用趨勢
 
+const PREPARATION_LIST_PRESETS = {
+  'outing_bag': { attributes: '出遠門,必要,視情況', condition: '' },
+};
+
 // 取得物品準備清單
+// preset:     預設情境 key（選填），對應 PREPARATION_LIST_PRESETS
 // attributes: 逗號分隔的屬性列表（選填），item 的所有屬性皆需包含在內才符合
 // condition:  其他條件篩選（選填），有帶則作為額外 AND 條件
-function Action_GetPreparationList(attributesParam, conditionParam) {
+function Action_GetPreparationList(attributesParam, conditionParam, presetParam) {
+  if (presetParam && PREPARATION_LIST_PRESETS[presetParam]) {
+    var preset = PREPARATION_LIST_PRESETS[presetParam];
+    attributesParam = preset.attributes;
+    conditionParam = preset.condition;
+  }
   var sheet = SpreadsheetApp.getActive().getSheetByName(SHEET_NAME_PREPARATION_LIST);
   if (!sheet)
     return new ServerResponse(STATUS_CODE_INVALID, '找不到物品準備清單', '', MESSAGE_TYPE_TEXT);

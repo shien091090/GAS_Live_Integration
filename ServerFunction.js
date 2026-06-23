@@ -75,7 +75,7 @@ function doGet(e) {
       break;
 
     case ACTION_GET_PREPARATION_LIST:
-      res = Action_GetPreparationList(param.attributes, param.condition);
+      res = Action_GetPreparationList(param.attributes, param.condition, param.preset);
       break;
 
     case 'action_debug_buy_reminder':
