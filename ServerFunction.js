@@ -78,6 +78,10 @@ function doGet(e) {
       res = Action_GetPreparationList(param.attributes, param.condition);
       break;
 
+    case ACTION_RECORD_DAILY_TIME:
+      res = Action_RecordDailyTime(param.eventType);
+      break;
+
     case 'action_debug_buy_reminder':
       res = new ServerResponse(STATUS_CODE_SUCCESS, 'debug', JSON.stringify(GetBuyReminderConfigs()), MESSAGE_TYPE_TEXT);
       break;

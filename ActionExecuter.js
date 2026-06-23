@@ -733,6 +733,34 @@ function Action_GetPreparationList(attributesParam, conditionParam) {
   return new ServerResponse(STATUS_CODE_SUCCESS, '物品準備清單', resultText.trim(), MESSAGE_TYPE_TEXT);
 }
 
+// 記錄日常時間
+function Action_RecordDailyTime(eventType) {
+  if (!eventType || eventType.trim() === '')
+    return new ServerResponse(STATUS_CODE_INVALID, '請指定事件類型', '', MESSAGE_TYPE_TEXT);
+
+  if (DAILY_TIME_EVENT_TYPES.indexOf(eventType) === -1)
+    return new ServerResponse(STATUS_CODE_INVALID, `無效的事件類型：${eventType}`, '', MESSAGE_TYPE_TEXT);
+
+  var sheet = SpreadsheetApp.getActive().getSheetByName(SHEET_NAME_DAILY_TIME_RECORD);
+  if (!sheet)
+    return new ServerResponse(STATUS_CODE_INVALID, '找不到日常時間紀錄分頁', '', MESSAGE_TYPE_TEXT);
+
+  var now = new Date();
+  var dateStr = Utilities.formatDate(now, 'GMT+8', 'yyyy/MM/dd');
+  var timeStr = Utilities.formatDate(now, 'GMT+8', 'HH:mm:ss');
+
+  var nextRow = sheet.getLastRow() + 1;
+  sheet.getRange(nextRow, 1).setValue(dateStr);
+  sheet.getRange(nextRow, 2).setValue(timeStr);
+  sheet.getRange(nextRow, 3).setValue(eventType);
+
+  return new ServerResponse(
+    STATUS_CODE_SUCCESS,
+    `已記錄：${eventType}`,
+    `${dateStr} ${timeStr}`,
+    MESSAGE_TYPE_TEXT);
+}
+
 function IsAccountingScheduleItem(content) {
   return content.startsWith("記帳 ");
 }
