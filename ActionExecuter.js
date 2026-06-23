@@ -683,7 +683,9 @@ function Action_GetAccountPieChart(command) {
 //TODO : 返回近N個月預算使用趨勢
 
 // 取得物品準備清單
-function Action_GetPreparationList() {
+// attributes: 逗號分隔的屬性列表（選填），item 的所有屬性皆需包含在內才符合
+// condition:  其他條件篩選（選填），有帶則作為額外 AND 條件
+function Action_GetPreparationList(attributesParam, conditionParam) {
   var sheet = SpreadsheetApp.getActive().getSheetByName(SHEET_NAME_PREPARATION_LIST);
   if (!sheet)
     return new ServerResponse(STATUS_CODE_INVALID, '找不到物品準備清單', '', MESSAGE_TYPE_TEXT);
@@ -692,20 +694,38 @@ function Action_GetPreparationList() {
   if (lastRow < 2)
     return new ServerResponse(STATUS_CODE_SUCCESS, '物品準備清單', '(空)', MESSAGE_TYPE_TEXT);
 
+  var filterAttributes = [];
+  if (attributesParam && attributesParam.trim() !== '')
+    filterAttributes = attributesParam.split(',').map(function(s) { return s.trim(); }).filter(function(s) { return s !== ''; });
+
+  var filterCondition = (conditionParam && conditionParam.trim() !== '') ? conditionParam.trim() : '';
+
   var data = sheet.getRange(2, 1, lastRow - 1, 3).getValues();
   var resultText = '';
+  var displayIndex = 1;
 
-  data.forEach(function(row, index) {
+  data.forEach(function(row) {
     var name = String(row[0]).trim();
-    var attribute = String(row[1]).trim();
+    var attributeRaw = String(row[1]).trim();
     var condition = String(row[2]).trim();
 
     if (name === '') return;
 
-    resultText += `${index + 1}. ${name}`;
-    if (attribute !== '') resultText += `（${attribute}）`;
+    // 屬性篩選：item 的所有屬性必須都在 filterAttributes 中
+    if (filterAttributes.length > 0) {
+      var itemAttributes = attributeRaw.split(',').map(function(s) { return s.trim(); }).filter(function(s) { return s !== ''; });
+      var allCovered = itemAttributes.every(function(attr) { return filterAttributes.indexOf(attr) !== -1; });
+      if (!allCovered) return;
+    }
+
+    // 其他條件篩選
+    if (filterCondition !== '' && condition !== filterCondition) return;
+
+    resultText += `${displayIndex}. ${name}`;
+    if (attributeRaw !== '') resultText += `（${attributeRaw}）`;
     if (condition !== '') resultText += `，${condition}`;
     resultText += '\n';
+    displayIndex++;
   });
 
   if (resultText === '')
