@@ -732,7 +732,6 @@ function Action_GetPreparationList(attributesParam, conditionParam, presetParam)
     if (filterCondition !== '' && condition !== filterCondition) return;
 
     resultText += `${displayIndex}. ${name}`;
-    if (attributeRaw !== '') resultText += `（${attributeRaw}）`;
     if (condition !== '') resultText += `，${condition}`;
     resultText += '\n';
     displayIndex++;
