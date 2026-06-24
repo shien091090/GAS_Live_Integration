@@ -677,6 +677,99 @@ function Action_GetAccountPieChart(command) {
   }
 }
 
+function Action_GetBudgetStatus(yearParam, monthParam) {
+  var ss = SpreadsheetApp.getActive();
+  var budgetSheet = ss.getSheetByName(SHEET_NAME_BUDGET_SETTING);
+  if (!budgetSheet)
+    return new ServerResponse(STATUS_CODE_INVALID, '找不到預算設定分頁', '', MESSAGE_TYPE_TEXT);
+
+  var budgetLastRow = budgetSheet.getLastRow();
+  if (budgetLastRow < 2)
+    return new ServerResponse(STATUS_CODE_SUCCESS, '無預算資料', '{"categories":[],"totalBudget":0,"totalSpent":0,"totalDiff":0,"totalIsOverBudget":false}', MESSAGE_TYPE_TEXT);
+
+  var budgetData = budgetSheet.getRange(2, 1, budgetLastRow - 1, 12).getValues();
+
+  var accountingSheet = ss.getSheetByName(SHEET_NAME_ACCOUNTING);
+  var accountingData = [];
+  if (accountingSheet && accountingSheet.getLastRow() >= 2)
+    accountingData = accountingSheet.getRange(2, 1, accountingSheet.getLastRow() - 1, 4).getValues();
+
+  var now = new Date();
+  var targetYear = (yearParam && parseInt(yearParam) > 0) ? parseInt(yearParam) : now.getFullYear();
+  var currentMonth = (monthParam && parseInt(monthParam) > 0) ? parseInt(monthParam) : now.getMonth() + 1;
+
+  var specialPairs = [
+    [COLUMN_SETTING_BUDGET_SETTING.SpecialMonth1, COLUMN_SETTING_BUDGET_SETTING.SpecialAmount1],
+    [COLUMN_SETTING_BUDGET_SETTING.SpecialMonth2, COLUMN_SETTING_BUDGET_SETTING.SpecialAmount2],
+    [COLUMN_SETTING_BUDGET_SETTING.SpecialMonth3, COLUMN_SETTING_BUDGET_SETTING.SpecialAmount3],
+    [COLUMN_SETTING_BUDGET_SETTING.SpecialMonth4, COLUMN_SETTING_BUDGET_SETTING.SpecialAmount4],
+    [COLUMN_SETTING_BUDGET_SETTING.SpecialMonth5, COLUMN_SETTING_BUDGET_SETTING.SpecialAmount5],
+  ];
+
+  var categories = [];
+  var totalBudget = 0;
+  var totalSpent = 0;
+
+  for (var i = 0; i < budgetData.length; i++) {
+    var row = budgetData[i];
+    var budgetType = String(row[COLUMN_SETTING_BUDGET_SETTING.BudgetType - 1]).trim();
+    if (!budgetType || budgetType === '') continue;
+
+    var baseBudget = parseInt(row[COLUMN_SETTING_BUDGET_SETTING.MonthlyAmount - 1]) || 0;
+    var specialAdjustment = 0;
+
+    specialPairs.forEach(function(pair) {
+      var specialMonth = row[pair[0] - 1];
+      var specialAmount = row[pair[1] - 1];
+      if (specialMonth !== '' && parseInt(specialMonth) === currentMonth)
+        specialAdjustment += parseInt(specialAmount) || 0;
+    });
+
+    var effectiveBudget = baseBudget + specialAdjustment;
+    if (effectiveBudget <= 0) continue;
+
+    var spent = 0;
+    accountingData.forEach(function(accRow) {
+      var date = accRow[COLUMN_SETTING_ACCOUNTING.Date - 1];
+      var prize = accRow[COLUMN_SETTING_ACCOUNTING.Prize - 1];
+      var rowBudgetType = accRow[COLUMN_SETTING_ACCOUNTING.BudgetType - 1];
+      if (!date || date === '') return;
+      var rowDate = new Date(date);
+      if (rowDate.getFullYear() === targetYear &&
+          rowDate.getMonth() + 1 === currentMonth &&
+          String(rowBudgetType) === budgetType)
+        spent += parseInt(prize) || 0;
+    });
+
+    var isOverBudget = spent > effectiveBudget;
+    categories.push({
+      name: budgetType,
+      baseBudget: baseBudget,
+      specialAdjustment: specialAdjustment,
+      effectiveBudget: effectiveBudget,
+      spent: spent,
+      diff: effectiveBudget - spent,
+      isOverBudget: isOverBudget,
+      overspent: isOverBudget ? spent - effectiveBudget : 0
+    });
+
+    totalBudget += effectiveBudget;
+    totalSpent += spent;
+  }
+
+  var result = {
+    year: targetYear,
+    month: currentMonth,
+    categories: categories,
+    totalBudget: totalBudget,
+    totalSpent: totalSpent,
+    totalDiff: totalBudget - totalSpent,
+    totalIsOverBudget: totalSpent > totalBudget
+  };
+
+  return new ServerResponse(STATUS_CODE_SUCCESS, '取得預算狀態成功', JSON.stringify(result), MESSAGE_TYPE_TEXT);
+}
+
 //TODO : 返回指定月份總花費
 //TODO : 返回指定月份指定種類的總花費
 //TODO : 返回指定月份預算使用狀況

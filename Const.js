@@ -20,6 +20,7 @@ const ACTION_GET_TOTAL_COST_BY_MONTH = 'action_get_total_cost_by_month'
 const ACTION_GET_CHART = 'action_get_chart'
 const ACTION_GET_PREPARATION_LIST = 'action_get_preparation_list'
 const ACTION_RECORD_DAILY_TIME = 'action_record_daily_time'
+const ACTION_GET_BUDGET_STATUS = 'action_get_budget_status'
 
 const DAILY_TIME_EVENT_TYPES = [
   '準備出門上班',
