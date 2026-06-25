@@ -687,7 +687,7 @@ function Action_GetBudgetStatus(yearParam, monthParam) {
   if (budgetLastRow < 2)
     return new ServerResponse(STATUS_CODE_SUCCESS, '無預算資料', '{"categories":[],"totalBudget":0,"totalSpent":0,"totalDiff":0,"totalIsOverBudget":false}', MESSAGE_TYPE_TEXT);
 
-  var budgetData = budgetSheet.getRange(2, 1, budgetLastRow - 1, 12).getValues();
+  var budgetData = budgetSheet.getRange(2, 1, budgetLastRow - 1, 17).getValues();
 
   var accountingSheet = ss.getSheetByName(SHEET_NAME_ACCOUNTING);
   var accountingData = [];
@@ -698,12 +698,12 @@ function Action_GetBudgetStatus(yearParam, monthParam) {
   var targetYear = (yearParam && parseInt(yearParam) > 0) ? parseInt(yearParam) : now.getFullYear();
   var currentMonth = (monthParam && parseInt(monthParam) > 0) ? parseInt(monthParam) : now.getMonth() + 1;
 
-  var specialPairs = [
-    [COLUMN_SETTING_BUDGET_SETTING.SpecialMonth1, COLUMN_SETTING_BUDGET_SETTING.SpecialAmount1],
-    [COLUMN_SETTING_BUDGET_SETTING.SpecialMonth2, COLUMN_SETTING_BUDGET_SETTING.SpecialAmount2],
-    [COLUMN_SETTING_BUDGET_SETTING.SpecialMonth3, COLUMN_SETTING_BUDGET_SETTING.SpecialAmount3],
-    [COLUMN_SETTING_BUDGET_SETTING.SpecialMonth4, COLUMN_SETTING_BUDGET_SETTING.SpecialAmount4],
-    [COLUMN_SETTING_BUDGET_SETTING.SpecialMonth5, COLUMN_SETTING_BUDGET_SETTING.SpecialAmount5],
+  var specialTriples = [
+    [COLUMN_SETTING_BUDGET_SETTING.SpecialMonth1, COLUMN_SETTING_BUDGET_SETTING.SpecialAmount1, COLUMN_SETTING_BUDGET_SETTING.SpecialItem1],
+    [COLUMN_SETTING_BUDGET_SETTING.SpecialMonth2, COLUMN_SETTING_BUDGET_SETTING.SpecialAmount2, COLUMN_SETTING_BUDGET_SETTING.SpecialItem2],
+    [COLUMN_SETTING_BUDGET_SETTING.SpecialMonth3, COLUMN_SETTING_BUDGET_SETTING.SpecialAmount3, COLUMN_SETTING_BUDGET_SETTING.SpecialItem3],
+    [COLUMN_SETTING_BUDGET_SETTING.SpecialMonth4, COLUMN_SETTING_BUDGET_SETTING.SpecialAmount4, COLUMN_SETTING_BUDGET_SETTING.SpecialItem4],
+    [COLUMN_SETTING_BUDGET_SETTING.SpecialMonth5, COLUMN_SETTING_BUDGET_SETTING.SpecialAmount5, COLUMN_SETTING_BUDGET_SETTING.SpecialItem5],
   ];
 
   var categories = [];
@@ -718,9 +718,9 @@ function Action_GetBudgetStatus(yearParam, monthParam) {
     var baseBudget = parseInt(row[COLUMN_SETTING_BUDGET_SETTING.MonthlyAmount - 1]) || 0;
     var specialAdjustment = 0;
 
-    specialPairs.forEach(function(pair) {
-      var specialMonth = row[pair[0] - 1];
-      var specialAmount = row[pair[1] - 1];
+    specialTriples.forEach(function(triple) {
+      var specialMonth = row[triple[0] - 1];
+      var specialAmount = row[triple[1] - 1];
       if (specialMonth !== '' && parseInt(specialMonth) === currentMonth)
         specialAdjustment += parseInt(specialAmount) || 0;
     });
@@ -779,14 +779,14 @@ function Action_GetSpecialSchedule() {
   if (lastRow < 2)
     return new ServerResponse(STATUS_CODE_SUCCESS, '無資料', '[]', MESSAGE_TYPE_TEXT);
 
-  var data = budgetSheet.getRange(2, 1, lastRow - 1, 12).getValues();
+  var data = budgetSheet.getRange(2, 1, lastRow - 1, 17).getValues();
 
-  var specialPairs = [
-    [COLUMN_SETTING_BUDGET_SETTING.SpecialMonth1, COLUMN_SETTING_BUDGET_SETTING.SpecialAmount1],
-    [COLUMN_SETTING_BUDGET_SETTING.SpecialMonth2, COLUMN_SETTING_BUDGET_SETTING.SpecialAmount2],
-    [COLUMN_SETTING_BUDGET_SETTING.SpecialMonth3, COLUMN_SETTING_BUDGET_SETTING.SpecialAmount3],
-    [COLUMN_SETTING_BUDGET_SETTING.SpecialMonth4, COLUMN_SETTING_BUDGET_SETTING.SpecialAmount4],
-    [COLUMN_SETTING_BUDGET_SETTING.SpecialMonth5, COLUMN_SETTING_BUDGET_SETTING.SpecialAmount5],
+  var specialTriples = [
+    [COLUMN_SETTING_BUDGET_SETTING.SpecialMonth1, COLUMN_SETTING_BUDGET_SETTING.SpecialAmount1, COLUMN_SETTING_BUDGET_SETTING.SpecialItem1],
+    [COLUMN_SETTING_BUDGET_SETTING.SpecialMonth2, COLUMN_SETTING_BUDGET_SETTING.SpecialAmount2, COLUMN_SETTING_BUDGET_SETTING.SpecialItem2],
+    [COLUMN_SETTING_BUDGET_SETTING.SpecialMonth3, COLUMN_SETTING_BUDGET_SETTING.SpecialAmount3, COLUMN_SETTING_BUDGET_SETTING.SpecialItem3],
+    [COLUMN_SETTING_BUDGET_SETTING.SpecialMonth4, COLUMN_SETTING_BUDGET_SETTING.SpecialAmount4, COLUMN_SETTING_BUDGET_SETTING.SpecialItem4],
+    [COLUMN_SETTING_BUDGET_SETTING.SpecialMonth5, COLUMN_SETTING_BUDGET_SETTING.SpecialAmount5, COLUMN_SETTING_BUDGET_SETTING.SpecialItem5],
   ];
 
   var results = [];
@@ -796,16 +796,18 @@ function Action_GetSpecialSchedule() {
     var name = String(row[COLUMN_SETTING_BUDGET_SETTING.BudgetType - 1]).trim();
     if (!name || name === '') continue;
 
-    specialPairs.forEach(function(pair) {
-      var specialMonth = row[pair[0] - 1];
-      var specialAmount = row[pair[1] - 1];
+    specialTriples.forEach(function(triple) {
+      var specialMonth = row[triple[0] - 1];
+      var specialAmount = row[triple[1] - 1];
+      var specialItem = String(row[triple[2] - 1]).trim();
       var month = parseInt(specialMonth);
       var amount = parseInt(specialAmount);
       if (!isNaN(month) && !isNaN(amount) && amount !== 0) {
         results.push({
           name: name,
           specialMonth: month,
-          specialAmount: amount
+          specialAmount: amount,
+          specialItem: specialItem
         });
       }
     });
