@@ -799,11 +799,13 @@ function Action_GetSpecialSchedule() {
     specialPairs.forEach(function(pair) {
       var specialMonth = row[pair[0] - 1];
       var specialAmount = row[pair[1] - 1];
-      if (specialMonth !== '' && specialAmount !== '' && parseInt(specialAmount) !== 0) {
+      var month = parseInt(specialMonth);
+      var amount = parseInt(specialAmount);
+      if (!isNaN(month) && !isNaN(amount) && amount !== 0) {
         results.push({
           name: name,
-          specialMonth: parseInt(specialMonth),
-          specialAmount: parseInt(specialAmount) || 0
+          specialMonth: month,
+          specialAmount: amount
         });
       }
     });
