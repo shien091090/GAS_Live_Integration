@@ -770,6 +770,48 @@ function Action_GetBudgetStatus(yearParam, monthParam) {
   return new ServerResponse(STATUS_CODE_SUCCESS, '取得預算狀態成功', JSON.stringify(result), MESSAGE_TYPE_TEXT);
 }
 
+function Action_GetSpecialSchedule() {
+  var budgetSheet = SpreadsheetApp.getActive().getSheetByName(SHEET_NAME_BUDGET_SETTING);
+  if (!budgetSheet)
+    return new ServerResponse(STATUS_CODE_INVALID, '找不到預算設定分頁', '', MESSAGE_TYPE_TEXT);
+
+  var lastRow = budgetSheet.getLastRow();
+  if (lastRow < 2)
+    return new ServerResponse(STATUS_CODE_SUCCESS, '無資料', '[]', MESSAGE_TYPE_TEXT);
+
+  var data = budgetSheet.getRange(2, 1, lastRow - 1, 12).getValues();
+
+  var specialPairs = [
+    [COLUMN_SETTING_BUDGET_SETTING.SpecialMonth1, COLUMN_SETTING_BUDGET_SETTING.SpecialAmount1],
+    [COLUMN_SETTING_BUDGET_SETTING.SpecialMonth2, COLUMN_SETTING_BUDGET_SETTING.SpecialAmount2],
+    [COLUMN_SETTING_BUDGET_SETTING.SpecialMonth3, COLUMN_SETTING_BUDGET_SETTING.SpecialAmount3],
+    [COLUMN_SETTING_BUDGET_SETTING.SpecialMonth4, COLUMN_SETTING_BUDGET_SETTING.SpecialAmount4],
+    [COLUMN_SETTING_BUDGET_SETTING.SpecialMonth5, COLUMN_SETTING_BUDGET_SETTING.SpecialAmount5],
+  ];
+
+  var results = [];
+
+  for (var i = 0; i < data.length; i++) {
+    var row = data[i];
+    var name = String(row[COLUMN_SETTING_BUDGET_SETTING.BudgetType - 1]).trim();
+    if (!name || name === '') continue;
+
+    specialPairs.forEach(function(pair) {
+      var specialMonth = row[pair[0] - 1];
+      var specialAmount = row[pair[1] - 1];
+      if (specialMonth !== '' && specialAmount !== '' && parseInt(specialAmount) !== 0) {
+        results.push({
+          name: name,
+          specialMonth: parseInt(specialMonth),
+          specialAmount: parseInt(specialAmount) || 0
+        });
+      }
+    });
+  }
+
+  return new ServerResponse(STATUS_CODE_SUCCESS, '取得特殊月份設定成功', JSON.stringify(results), MESSAGE_TYPE_TEXT);
+}
+
 //TODO : 返回指定月份總花費
 //TODO : 返回指定月份指定種類的總花費
 //TODO : 返回指定月份預算使用狀況

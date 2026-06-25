@@ -86,6 +86,10 @@ function doGet(e) {
       res = Action_GetBudgetStatus(param.year, param.month);
       break;
 
+    case ACTION_GET_SPECIAL_SCHEDULE:
+      res = Action_GetSpecialSchedule();
+      break;
+
     case 'action_debug_buy_reminder':
       res = new ServerResponse(STATUS_CODE_SUCCESS, 'debug', JSON.stringify(GetBuyReminderConfigs()), MESSAGE_TYPE_TEXT);
       break;
