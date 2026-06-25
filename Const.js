@@ -30,6 +30,8 @@ const DAILY_TIME_EVENT_TYPES = [
   '下班到家',
   '準備洗澡',
   '準備睡覺',
+  '璇璇準備入睡',
+  '璇璇睡著',
 ]
 const ACTION_RECORD_BABY_DIAPER_CHANGING_TIME = 'action_record_baby_diaper_changing_time'
 const ACTION_RECORD_BABY_EAT_TIME = 'action_record_baby_eat_time'
