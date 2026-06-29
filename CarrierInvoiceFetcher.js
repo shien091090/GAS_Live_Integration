@@ -19,22 +19,6 @@ function syncCarrierInvoices() {
   var data = _searchInvoices(sid, jwt);
 
   Logger.log('原始回傳: ' + JSON.stringify(data, null, 2));
-
-  _ensureSheet();
-}
-
-function _ensureSheet() {
-  var ss = SpreadsheetApp.openById('1vDFl5qpQb_oTj0xZt1PRw-39yvfbvsYZx04BN10ZQHQ');
-  var sheet = ss.getSheetByName(CARRIER_SHEET_NAME);
-  if (!sheet) {
-    sheet = ss.insertSheet(CARRIER_SHEET_NAME);
-    sheet.appendRow(['發票日期', '發票號碼', '商店名稱', '金額', '狀態', '同步時間']);
-    sheet.getRange(1, 1, 1, 6).setFontWeight('bold');
-    Logger.log('已建立「' + CARRIER_SHEET_NAME + '」分頁');
-  } else {
-    Logger.log('分頁已存在');
-  }
-  return sheet;
 }
 
 function _getSearchJWT(sid, startDate, endDate) {
@@ -82,7 +66,7 @@ function _headers(sid) {
     'Content-Type': 'application/json',
     'Accept': 'application/json, text/plain, */*',
     'Accept-Language': 'zh-TW,zh;q=0.9',
-    'Origin': 'https://www.einvoice.nat.gov.tw',
-    'Referer': 'https://www.einvoice.nat.gov.tw/'
+    'Origin': 'https://einvoice.nat.gov.tw',
+    'Referer': 'https://einvoice.nat.gov.tw/'
   };
 }
