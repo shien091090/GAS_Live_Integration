@@ -901,6 +901,110 @@ function Action_RecordDailyTime(eventType) {
     MESSAGE_TYPE_TEXT);
 }
 
+// 新增待購買項目
+function Action_AddPurchaseItem(itemName) {
+  if (!itemName || itemName.trim() === '')
+    return new ServerResponse(STATUS_CODE_INVALID, '請輸入品項名稱', '', MESSAGE_TYPE_TEXT);
+
+  var sheet = SpreadsheetApp.getActive().getSheetByName(SHEET_NAME_PURCHASE_LIST);
+  if (!sheet)
+    return new ServerResponse(STATUS_CODE_INVALID, '找不到購買清單分頁', '', MESSAGE_TYPE_TEXT);
+
+  var now = new Date();
+  var timeStr = Utilities.formatDate(now, 'GMT+8', 'yyyy/MM/dd HH:mm:ss');
+  var nextRow = sheet.getLastRow() + 1;
+  sheet.getRange(nextRow, COLUMN_SETTING_PURCHASE_LIST.ItemName).setValue(itemName.trim());
+  sheet.getRange(nextRow, COLUMN_SETTING_PURCHASE_LIST.AddTime).setValue(timeStr);
+
+  return new ServerResponse(STATUS_CODE_SUCCESS, '已新增：' + itemName.trim(), itemName.trim(), MESSAGE_TYPE_TEXT);
+}
+
+// 取得待購買清單（已購買時間為空的項目）
+function Action_GetPurchaseList() {
+  var sheet = SpreadsheetApp.getActive().getSheetByName(SHEET_NAME_PURCHASE_LIST);
+  if (!sheet)
+    return new ServerResponse(STATUS_CODE_INVALID, '找不到購買清單分頁', '', MESSAGE_TYPE_TEXT);
+
+  var lastRow = sheet.getLastRow();
+  if (lastRow < 2)
+    return new ServerResponse(STATUS_CODE_SUCCESS, '取得待購買清單成功', '[]', MESSAGE_TYPE_TEXT);
+
+  var data = sheet.getRange(2, 1, lastRow - 1, 3).getValues();
+  var items = [];
+  data.forEach(function(row) {
+    var name = String(row[COLUMN_SETTING_PURCHASE_LIST.ItemName - 1]).trim();
+    var addTime = String(row[COLUMN_SETTING_PURCHASE_LIST.AddTime - 1]).trim();
+    var boughtTime = String(row[COLUMN_SETTING_PURCHASE_LIST.BoughtTime - 1]).trim();
+    if (name !== '' && boughtTime === '')
+      items.push({ name: name, addTime: addTime });
+  });
+
+  return new ServerResponse(STATUS_CODE_SUCCESS, '取得待購買清單成功', JSON.stringify(items), MESSAGE_TYPE_TEXT);
+}
+
+// 刪除待購買項目（整列移除，以品項名稱搜尋第一筆符合）
+function Action_DeletePurchaseItem(itemName) {
+  if (!itemName || itemName.trim() === '')
+    return new ServerResponse(STATUS_CODE_INVALID, '請輸入品項名稱', '', MESSAGE_TYPE_TEXT);
+
+  var sheet = SpreadsheetApp.getActive().getSheetByName(SHEET_NAME_PURCHASE_LIST);
+  if (!sheet)
+    return new ServerResponse(STATUS_CODE_INVALID, '找不到購買清單分頁', '', MESSAGE_TYPE_TEXT);
+
+  var lastRow = sheet.getLastRow();
+  if (lastRow < 2)
+    return new ServerResponse(STATUS_CODE_INVALID, '購買清單目前為空', '', MESSAGE_TYPE_TEXT);
+
+  var data = sheet.getRange(2, 1, lastRow - 1, 1).getValues();
+  var targetRow = -1;
+  for (var i = 0; i < data.length; i++) {
+    if (String(data[i][0]).trim() === itemName.trim()) {
+      targetRow = i + 2;
+      break;
+    }
+  }
+
+  if (targetRow === -1)
+    return new ServerResponse(STATUS_CODE_INVALID, '找不到品項：' + itemName, '', MESSAGE_TYPE_TEXT);
+
+  sheet.deleteRow(targetRow);
+  return new ServerResponse(STATUS_CODE_SUCCESS, '已刪除：' + itemName.trim(), itemName.trim(), MESSAGE_TYPE_TEXT);
+}
+
+// 標註待購買項目為已購買（填入已購買時間）
+function Action_MarkPurchaseItemBought(itemName) {
+  if (!itemName || itemName.trim() === '')
+    return new ServerResponse(STATUS_CODE_INVALID, '請輸入品項名稱', '', MESSAGE_TYPE_TEXT);
+
+  var sheet = SpreadsheetApp.getActive().getSheetByName(SHEET_NAME_PURCHASE_LIST);
+  if (!sheet)
+    return new ServerResponse(STATUS_CODE_INVALID, '找不到購買清單分頁', '', MESSAGE_TYPE_TEXT);
+
+  var lastRow = sheet.getLastRow();
+  if (lastRow < 2)
+    return new ServerResponse(STATUS_CODE_INVALID, '購買清單目前為空', '', MESSAGE_TYPE_TEXT);
+
+  var data = sheet.getRange(2, 1, lastRow - 1, 3).getValues();
+  var targetRow = -1;
+  for (var i = 0; i < data.length; i++) {
+    var name = String(data[i][COLUMN_SETTING_PURCHASE_LIST.ItemName - 1]).trim();
+    var boughtTime = String(data[i][COLUMN_SETTING_PURCHASE_LIST.BoughtTime - 1]).trim();
+    if (name === itemName.trim() && boughtTime === '') {
+      targetRow = i + 2;
+      break;
+    }
+  }
+
+  if (targetRow === -1)
+    return new ServerResponse(STATUS_CODE_INVALID, '找不到未購買的品項：' + itemName, '', MESSAGE_TYPE_TEXT);
+
+  var now = new Date();
+  var timeStr = Utilities.formatDate(now, 'GMT+8', 'yyyy/MM/dd HH:mm:ss');
+  sheet.getRange(targetRow, COLUMN_SETTING_PURCHASE_LIST.BoughtTime).setValue(timeStr);
+
+  return new ServerResponse(STATUS_CODE_SUCCESS, '已標記為已購買：' + itemName.trim(), itemName.trim(), MESSAGE_TYPE_TEXT);
+}
+
 function IsAccountingScheduleItem(content) {
   return content.startsWith("記帳 ");
 }

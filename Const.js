@@ -22,6 +22,10 @@ const ACTION_GET_PREPARATION_LIST = 'action_get_preparation_list'
 const ACTION_RECORD_DAILY_TIME = 'action_record_daily_time'
 const ACTION_GET_BUDGET_STATUS = 'action_get_budget_status'
 const ACTION_GET_SPECIAL_SCHEDULE = 'action_get_special_schedule'
+const ACTION_PURCHASE_LIST_ADD = 'action_purchase_list_add'
+const ACTION_PURCHASE_LIST_GET = 'action_purchase_list_get'
+const ACTION_PURCHASE_LIST_DELETE = 'action_purchase_list_delete'
+const ACTION_PURCHASE_LIST_MARK_BOUGHT = 'action_purchase_list_mark_bought'
 
 const DAILY_TIME_EVENT_TYPES = [
   '準備出門上班',
@@ -99,6 +103,12 @@ const COLUMN_SETTING_ACCOUNTING_STATISTICS = Object.freeze({
   Type:1
 });
 
+const COLUMN_SETTING_PURCHASE_LIST = Object.freeze({
+  ItemName: 1,
+  AddTime: 2,
+  BoughtTime: 3
+});
+
 const CONTENT_SORT_KEY_WORD = Object.freeze({
   '(每月)':1,
   '(每週)':2
@@ -135,6 +145,7 @@ const COLUMN_SETTING_BUY_REMINDER_CONFIG = Object.freeze({
 const SHEET_NAME_BUDGET_SETTING = '預算設定'
 const SHEET_NAME_PREPARATION_LIST = '物品準備清單'
 const SHEET_NAME_DAILY_TIME_RECORD = '日常時間紀錄'
+const SHEET_NAME_PURCHASE_LIST = '購買清單'
 
 const COLUMN_SETTING_BUDGET_SETTING = Object.freeze({
   BudgetType: 1,

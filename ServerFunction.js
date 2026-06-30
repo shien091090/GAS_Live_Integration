@@ -90,6 +90,22 @@ function doGet(e) {
       res = Action_GetSpecialSchedule();
       break;
 
+    case ACTION_PURCHASE_LIST_ADD:
+      res = Action_AddPurchaseItem(param.itemName);
+      break;
+
+    case ACTION_PURCHASE_LIST_GET:
+      res = Action_GetPurchaseList();
+      break;
+
+    case ACTION_PURCHASE_LIST_DELETE:
+      res = Action_DeletePurchaseItem(param.itemName);
+      break;
+
+    case ACTION_PURCHASE_LIST_MARK_BOUGHT:
+      res = Action_MarkPurchaseItemBought(param.itemName);
+      break;
+
     case 'action_debug_buy_reminder':
       res = new ServerResponse(STATUS_CODE_SUCCESS, 'debug', JSON.stringify(GetBuyReminderConfigs()), MESSAGE_TYPE_TEXT);
       break;
