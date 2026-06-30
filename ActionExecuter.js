@@ -726,7 +726,6 @@ function Action_GetBudgetStatus(yearParam, monthParam) {
     });
 
     var effectiveBudget = baseBudget + specialAdjustment;
-    if (effectiveBudget <= 0) continue;
 
     var spent = 0;
     accountingData.forEach(function(accRow) {
@@ -740,6 +739,8 @@ function Action_GetBudgetStatus(yearParam, monthParam) {
           String(rowBudgetType) === budgetType)
         spent += parseInt(prize) || 0;
     });
+
+    if (effectiveBudget <= 0 && spent <= 0) continue;
 
     var isOverBudget = spent > effectiveBudget;
     categories.push({
