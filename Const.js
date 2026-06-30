@@ -39,7 +39,7 @@ const ACTION_RECORD_BABY_EAT_TIME = 'action_record_baby_eat_time'
 const MESSAGE_TYPE_TEXT = 'text'
 const MESSAGE_TYPE_CHART = 'chart'
 
-const IS_AUTO_SET_DATE = true;
+const IS_AUTO_SET_DATE = false;
 const SHEET_NAME_ACCOUNTING = '記帳';
 const SHEET_NAME_DAILY_MEMO = '每日待辦事項'
 const SHEET_NAME_SCHEDULE = '週期行程'
