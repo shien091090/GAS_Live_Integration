@@ -901,6 +901,19 @@ function Action_RecordDailyTime(eventType) {
     MESSAGE_TYPE_TEXT);
 }
 
+// 取得待辦事項（含建立時間）
+function Action_GetMemoJson() {
+  var items = GetSpecificCurrentSheetItems(SHEET_ITEM_TYPE.DailyMemoItem);
+  var result = items.map(function(item) {
+    var raw = item.modifyTime;
+    var modifyTime = raw instanceof Date
+      ? Utilities.formatDate(raw, 'GMT+8', 'yyyy/MM/dd HH:mm:ss')
+      : String(raw).trim();
+    return { content: item.content, modifyTime: modifyTime };
+  });
+  return new ServerResponse(STATUS_CODE_SUCCESS, '取得待辦事項成功', JSON.stringify(result), MESSAGE_TYPE_TEXT);
+}
+
 // 新增待購買項目
 function Action_AddPurchaseItem(itemName) {
   if (!itemName || itemName.trim() === '')

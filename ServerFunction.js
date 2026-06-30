@@ -90,6 +90,10 @@ function doGet(e) {
       res = Action_GetSpecialSchedule();
       break;
 
+    case ACTION_MEMO_GET_JSON:
+      res = Action_GetMemoJson();
+      break;
+
     case ACTION_PURCHASE_LIST_ADD:
       res = Action_AddPurchaseItem(param.itemName);
       break;
