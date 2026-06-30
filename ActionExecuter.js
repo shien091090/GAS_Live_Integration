@@ -933,8 +933,14 @@ function Action_GetPurchaseList() {
   var items = [];
   data.forEach(function(row) {
     var name = String(row[COLUMN_SETTING_PURCHASE_LIST.ItemName - 1]).trim();
-    var addTime = String(row[COLUMN_SETTING_PURCHASE_LIST.AddTime - 1]).trim();
-    var boughtTime = String(row[COLUMN_SETTING_PURCHASE_LIST.BoughtTime - 1]).trim();
+    var addTimeRaw = row[COLUMN_SETTING_PURCHASE_LIST.AddTime - 1];
+    var boughtTimeRaw = row[COLUMN_SETTING_PURCHASE_LIST.BoughtTime - 1];
+    var addTime = addTimeRaw instanceof Date
+      ? Utilities.formatDate(addTimeRaw, 'GMT+8', 'yyyy/MM/dd HH:mm:ss')
+      : String(addTimeRaw).trim();
+    var boughtTime = boughtTimeRaw instanceof Date
+      ? Utilities.formatDate(boughtTimeRaw, 'GMT+8', 'yyyy/MM/dd HH:mm:ss')
+      : String(boughtTimeRaw).trim();
     if (name !== '' && boughtTime === '')
       items.push({ name: name, addTime: addTime });
   });
@@ -988,7 +994,10 @@ function Action_MarkPurchaseItemBought(itemName) {
   var targetRow = -1;
   for (var i = 0; i < data.length; i++) {
     var name = String(data[i][COLUMN_SETTING_PURCHASE_LIST.ItemName - 1]).trim();
-    var boughtTime = String(data[i][COLUMN_SETTING_PURCHASE_LIST.BoughtTime - 1]).trim();
+    var boughtTimeRaw = data[i][COLUMN_SETTING_PURCHASE_LIST.BoughtTime - 1];
+    var boughtTime = boughtTimeRaw instanceof Date
+      ? Utilities.formatDate(boughtTimeRaw, 'GMT+8', 'yyyy/MM/dd HH:mm:ss')
+      : String(boughtTimeRaw).trim();
     if (name === itemName.trim() && boughtTime === '') {
       targetRow = i + 2;
       break;
