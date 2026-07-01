@@ -102,6 +102,10 @@ function doGet(e) {
       res = Action_GetDashboardEconomyAllMonths();
       break;
 
+    case ACTION_GET_IMPORTANT_SCHEDULE:
+      res = Action_GetImportantSchedule();
+      break;
+
     case ACTION_GET_DASHBOARD_FUTURE:
       res = Action_GetDashboardFuture();
       break;

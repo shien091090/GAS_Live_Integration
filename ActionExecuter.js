@@ -1044,6 +1044,30 @@ function Action_GetBudgetTypes() {
   return new ServerResponse(STATUS_CODE_SUCCESS, '取得預算種類成功', JSON.stringify(types), MESSAGE_TYPE_TEXT);
 }
 
+// 取得重要日程清單
+function Action_GetImportantSchedule() {
+  var sheet = SpreadsheetApp.getActive().getSheetByName(SHEET_NAME_IMPORTANT_SCHEDULE);
+  if (!sheet)
+    return new ServerResponse(STATUS_CODE_INVALID, '找不到重要日程分頁', '[]', MESSAGE_TYPE_TEXT);
+
+  var lastRow = sheet.getLastRow();
+  if (lastRow < 2)
+    return new ServerResponse(STATUS_CODE_SUCCESS, '取得重要日程成功', '[]', MESSAGE_TYPE_TEXT);
+
+  var data = sheet.getRange(2, 1, lastRow - 1, 2).getValues();
+  var items = [];
+  data.forEach(function(row) {
+    var name = String(row[COLUMN_SETTING_IMPORTANT_SCHEDULE.Name - 1]).trim();
+    var dateRaw = row[COLUMN_SETTING_IMPORTANT_SCHEDULE.Date - 1];
+    if (!name) return;
+    var dateStr = dateRaw instanceof Date
+      ? Utilities.formatDate(dateRaw, 'GMT+8', 'yyyy/MM/dd')
+      : String(dateRaw).trim();
+    items.push({ name: name, date: dateStr });
+  });
+  return new ServerResponse(STATUS_CODE_SUCCESS, '取得重要日程成功', JSON.stringify(items), MESSAGE_TYPE_TEXT);
+}
+
 // Dashboard 聚合 action — 經濟狀況頁（全年度，月份切換用）
 function Action_GetDashboardEconomyAllMonths() {
   var now = new Date();

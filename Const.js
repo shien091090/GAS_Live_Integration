@@ -25,6 +25,7 @@ const ACTION_GET_SPECIAL_SCHEDULE = 'action_get_special_schedule'
 const ACTION_MEMO_GET_JSON = 'action_memo_get_json'
 const ACTION_GET_BUDGET_TYPES = 'action_get_budget_types'
 const ACTION_GET_DASHBOARD_ECONOMY_ALL_MONTHS = 'action_get_dashboard_economy_all_months'
+const ACTION_GET_IMPORTANT_SCHEDULE = 'action_get_important_schedule'
 const ACTION_GET_DASHBOARD_FUTURE = 'action_get_dashboard_future'
 const ACTION_PURCHASE_LIST_ADD = 'action_purchase_list_add'
 const ACTION_PURCHASE_LIST_GET = 'action_purchase_list_get'
@@ -113,6 +114,11 @@ const COLUMN_SETTING_PURCHASE_LIST = Object.freeze({
   BoughtTime: 3
 });
 
+const COLUMN_SETTING_IMPORTANT_SCHEDULE = Object.freeze({
+  Name: 1,
+  Date: 2
+});
+
 const CONTENT_SORT_KEY_WORD = Object.freeze({
   '(每月)':1,
   '(每週)':2
@@ -150,6 +156,7 @@ const SHEET_NAME_BUDGET_SETTING = '預算設定'
 const SHEET_NAME_PREPARATION_LIST = '物品準備清單'
 const SHEET_NAME_DAILY_TIME_RECORD = '日常時間紀錄'
 const SHEET_NAME_PURCHASE_LIST = '購買清單'
+const SHEET_NAME_IMPORTANT_SCHEDULE = '重要日程'
 
 const COLUMN_SETTING_BUDGET_SETTING = Object.freeze({
   BudgetType: 1,
