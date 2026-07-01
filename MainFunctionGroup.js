@@ -39,6 +39,10 @@ function KeepAccount(accountItemName, prize, budgetType = '') {
   var startCell = targetSheet.getRange(1, COLUMN_SETTING_ACCOUNTING.AccountingContent);
   var targetRow = startCell.getNextDataCell(SpreadsheetApp.Direction.DOWN).getRow() + 1;
 
+  var today = new Date();
+  var todayZero = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  targetSheet.getRange(targetRow, COLUMN_SETTING_ACCOUNTING.Date).setValue(todayZero);
+
   var accountItemCell = targetSheet.getRange(targetRow, COLUMN_SETTING_ACCOUNTING.AccountingContent);
   accountItemCell.setValue(accountItemName);
 
