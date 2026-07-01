@@ -1,4 +1,4 @@
-//新增待辦事項
+﻿//新增待辦事項
 function Action_AddMemo(content) {
   var newMemoItems = GetSpecificCurrentSheetItems(SHEET_ITEM_TYPE.DailyMemoItem);
   var newItem = new MemoElement([0, 0, new Date(), String(content), 0]);
@@ -917,6 +917,26 @@ function _GetTodayEventTypes(sheet, dateStr) {
   return events;
 }
 
+// 取得指定日期、指定時間段內已紀錄的事件類型清單（startHour inclusive, endHour exclusive）
+function _GetEventsInTimeWindow(sheet, dateStr, startHour, endHour) {
+  var lastRow = sheet.getLastRow();
+  if (lastRow < 2) return [];
+  var data = sheet.getRange(2, 1, lastRow - 1, 3).getValues();
+  var events = [];
+  data.forEach(function(row) {
+    var rowDate = row[0] instanceof Date
+      ? Utilities.formatDate(row[0], 'GMT+8', 'yyyy/MM/dd')
+      : String(row[0]).trim();
+    if (rowDate !== dateStr) return;
+    var rowHour = row[1] instanceof Date
+      ? parseInt(Utilities.formatDate(row[1], 'GMT+8', 'HH'))
+      : parseInt(String(row[1]).trim().substring(0, 2));
+    if (rowHour >= startHour && rowHour < endHour)
+      events.push(String(row[2]).trim());
+  });
+  return events;
+}
+
 // NFC 貼紙觸發 — 依位置執行對應流程
 function Action_TriggerNfc(location) {
   if (!location || location.trim() === '')
@@ -966,13 +986,31 @@ function Action_TriggerNfc(location) {
 
   } else if (location === NFC_LOCATION_BEDROOM) {
     if (hour >= 4 && hour < 12) {
-      if (todayEvents.indexOf('起床') !== -1)
-        return new ServerResponse(STATUS_CODE_SUCCESS, '今日已記錄起床時間', '', MESSAGE_TYPE_TEXT);
+      var morningEvents = _GetEventsInTimeWindow(sheet, dateStr, 4, 12);
+      if (morningEvents.indexOf('起床') !== -1)
+        return new ServerResponse(STATUS_CODE_SUCCESS, '今日 04:00~12:00 內已記錄起床時間', '', MESSAGE_TYPE_TEXT);
       eventToRecord = '起床';
-    } else {
-      if (todayEvents.indexOf('準備睡覺') !== -1)
-        return new ServerResponse(STATUS_CODE_SUCCESS, '今日已記錄準備睡覺時間', '', MESSAGE_TYPE_TEXT);
+    } else if (hour >= 18 || hour < 4) {
+      // 準備睡覺窗口：18:00~03:59（跨日）
+      var hasSleep = false;
+      if (hour < 4) {
+        // 00:00~03:59：往回查昨天 18:00~24:00 + 今天 00:00~04:00
+        var yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+        var yesterdayStr = Utilities.formatDate(yesterday, 'GMT+8', 'yyyy/MM/dd');
+        var lastNightEvents = _GetEventsInTimeWindow(sheet, yesterdayStr, 18, 24);
+        var earlyMorningEvents = _GetEventsInTimeWindow(sheet, dateStr, 0, 4);
+        hasSleep = lastNightEvents.indexOf('準備睡覺') !== -1 || earlyMorningEvents.indexOf('準備睡覺') !== -1;
+      } else {
+        // 18:00~23:59：只查今天
+        var eveningEvents = _GetEventsInTimeWindow(sheet, dateStr, 18, 24);
+        hasSleep = eveningEvents.indexOf('準備睡覺') !== -1;
+      }
+      if (hasSleep)
+        return new ServerResponse(STATUS_CODE_SUCCESS, '今日睡覺時間已記錄', '', MESSAGE_TYPE_TEXT);
       eventToRecord = '準備睡覺';
+    } else {
+      // 12:00~17:59：不在記錄時間範圍
+      return new ServerResponse(STATUS_CODE_SUCCESS, '目前不在記錄時間範圍（12:00~17:59）', '', MESSAGE_TYPE_TEXT);
     }
   } else {
     return new ServerResponse(STATUS_CODE_INVALID, '無效的NFC位置：' + location, '', MESSAGE_TYPE_TEXT);
