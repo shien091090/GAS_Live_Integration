@@ -94,6 +94,14 @@ function doGet(e) {
       res = Action_GetMemoJson();
       break;
 
+    case ACTION_GET_DASHBOARD_ECONOMY:
+      res = Action_GetDashboardEconomy();
+      break;
+
+    case ACTION_GET_DASHBOARD_FUTURE:
+      res = Action_GetDashboardFuture();
+      break;
+
     case ACTION_PURCHASE_LIST_ADD:
       res = Action_AddPurchaseItem(param.itemName);
       break;

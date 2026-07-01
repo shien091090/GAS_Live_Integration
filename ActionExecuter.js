@@ -1027,6 +1027,41 @@ function Action_MarkPurchaseItemBought(itemName) {
   return new ServerResponse(STATUS_CODE_SUCCESS, '已標記為已購買：' + itemName.trim(), itemName.trim(), MESSAGE_TYPE_TEXT);
 }
 
+// Dashboard 聚合 action — 經濟狀況頁
+function Action_GetDashboardEconomy() {
+  var now = new Date();
+  var year = parseInt(Utilities.formatDate(now, 'GMT+8', 'yyyy'));
+  var month = parseInt(Utilities.formatDate(now, 'GMT+8', 'MM'));
+  var lastDay = new Date(year, month, 0).getDate();
+  var pad = function(n) { return ('0' + n).slice(-2); };
+  var startDate = year + '/' + pad(month) + '/01';
+  var endDate = year + '/' + pad(month) + '/' + pad(lastDay);
+
+  var itemsResp = Action_GetAccountingItems(startDate, endDate);
+  var budgetResp = Action_GetBudgetStatus(String(year), String(month));
+  var scheduleResp = Action_GetSpecialSchedule();
+  var memoResp = Action_GetMemo();
+
+  var result = {
+    items: JSON.parse(itemsResp.responseMsg),
+    budget: JSON.parse(budgetResp.responseMsg),
+    schedule: JSON.parse(scheduleResp.responseMsg),
+    memo: memoResp.responseMsg
+  };
+  return new ServerResponse(STATUS_CODE_SUCCESS, '取得經濟狀況資料成功', JSON.stringify(result), MESSAGE_TYPE_TEXT);
+}
+
+// Dashboard 聚合 action — 未來安排頁
+function Action_GetDashboardFuture() {
+  var memoResp = Action_GetMemoJson();
+  var purchaseResp = Action_GetPurchaseList();
+  var result = {
+    memo: JSON.parse(memoResp.responseMsg),
+    purchase: purchaseResp.statusCode === STATUS_CODE_SUCCESS ? JSON.parse(purchaseResp.responseMsg) : []
+  };
+  return new ServerResponse(STATUS_CODE_SUCCESS, '取得未來安排資料成功', JSON.stringify(result), MESSAGE_TYPE_TEXT);
+}
+
 function IsAccountingScheduleItem(content) {
   return content.startsWith("記帳 ");
 }
