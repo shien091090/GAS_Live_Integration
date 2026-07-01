@@ -1044,30 +1044,40 @@ function Action_GetBudgetTypes() {
   return new ServerResponse(STATUS_CODE_SUCCESS, '取得預算種類成功', JSON.stringify(types), MESSAGE_TYPE_TEXT);
 }
 
-// Dashboard 聚合 action — 經濟狀況頁
-function Action_GetDashboardEconomy() {
+// Dashboard 聚合 action — 經濟狀況頁（全年度，月份切換用）
+function Action_GetDashboardEconomyAllMonths() {
   var now = new Date();
   var year = parseInt(Utilities.formatDate(now, 'GMT+8', 'yyyy'));
-  var month = parseInt(Utilities.formatDate(now, 'GMT+8', 'MM'));
-  var lastDay = new Date(year, month, 0).getDate();
+  var currentMonth = parseInt(Utilities.formatDate(now, 'GMT+8', 'MM'));
   var pad = function(n) { return ('0' + n).slice(-2); };
-  var startDate = year + '/' + pad(month) + '/01';
-  var endDate = year + '/' + pad(month) + '/' + pad(lastDay);
 
-  var itemsResp = Action_GetAccountingItems(startDate, endDate);
-  var budgetResp = Action_GetBudgetStatus(String(year), String(month));
+  var months = [];
+  for (var m = 1; m <= currentMonth; m++) {
+    var lastDay = new Date(year, m, 0).getDate();
+    var startDate = year + '/' + pad(m) + '/01';
+    var endDate = year + '/' + pad(m) + '/' + pad(lastDay);
+    var itemsResp = Action_GetAccountingItems(startDate, endDate);
+    var budgetResp = Action_GetBudgetStatus(String(year), String(m));
+    months.push({
+      month: m,
+      items: JSON.parse(itemsResp.responseMsg),
+      budget: JSON.parse(budgetResp.responseMsg)
+    });
+  }
+
   var scheduleResp = Action_GetSpecialSchedule();
   var memoResp = Action_GetMemo();
   var budgetTypesResp = Action_GetBudgetTypes();
 
   var result = {
-    items: JSON.parse(itemsResp.responseMsg),
-    budget: JSON.parse(budgetResp.responseMsg),
+    year: year,
+    currentMonth: currentMonth,
+    months: months,
     schedule: JSON.parse(scheduleResp.responseMsg),
     memo: memoResp.responseMsg,
     budgetTypes: JSON.parse(budgetTypesResp.responseMsg)
   };
-  return new ServerResponse(STATUS_CODE_SUCCESS, '取得經濟狀況資料成功', JSON.stringify(result), MESSAGE_TYPE_TEXT);
+  return new ServerResponse(STATUS_CODE_SUCCESS, '取得全年度經濟狀況資料成功', JSON.stringify(result), MESSAGE_TYPE_TEXT);
 }
 
 // Dashboard 聚合 action — 未來安排頁

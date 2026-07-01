@@ -98,8 +98,8 @@ function doGet(e) {
       res = Action_GetBudgetTypes();
       break;
 
-    case ACTION_GET_DASHBOARD_ECONOMY:
-      res = Action_GetDashboardEconomy();
+    case ACTION_GET_DASHBOARD_ECONOMY_ALL_MONTHS:
+      res = Action_GetDashboardEconomyAllMonths();
       break;
 
     case ACTION_GET_DASHBOARD_FUTURE:
