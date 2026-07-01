@@ -82,6 +82,10 @@ function doGet(e) {
       res = Action_RecordDailyTime(param.eventType);
       break;
 
+    case ACTION_TRIGGER_NFC:
+      res = Action_TriggerNfc(param.location);
+      break;
+
     case ACTION_GET_BUDGET_STATUS:
       res = Action_GetBudgetStatus(param.year, param.month);
       break;

@@ -901,6 +901,95 @@ function Action_RecordDailyTime(eventType) {
     MESSAGE_TYPE_TEXT);
 }
 
+// 取得指定日期已紀錄的事件類型清單
+function _GetTodayEventTypes(sheet, dateStr) {
+  var lastRow = sheet.getLastRow();
+  if (lastRow < 2) return [];
+  var data = sheet.getRange(2, 1, lastRow - 1, 3).getValues();
+  var events = [];
+  data.forEach(function(row) {
+    var rowDate = row[0] instanceof Date
+      ? Utilities.formatDate(row[0], 'GMT+8', 'yyyy/MM/dd')
+      : String(row[0]).trim();
+    if (rowDate === dateStr)
+      events.push(String(row[2]).trim());
+  });
+  return events;
+}
+
+// NFC 貼紙觸發 — 依位置執行對應流程
+function Action_TriggerNfc(location) {
+  if (!location || location.trim() === '')
+    return new ServerResponse(STATUS_CODE_INVALID, '請指定NFC位置', '', MESSAGE_TYPE_TEXT);
+
+  var sheet = SpreadsheetApp.getActive().getSheetByName(SHEET_NAME_DAILY_TIME_RECORD);
+  if (!sheet)
+    return new ServerResponse(STATUS_CODE_INVALID, '找不到日常時間紀錄分頁', '', MESSAGE_TYPE_TEXT);
+
+  var now = new Date();
+  var dateStr = Utilities.formatDate(now, 'GMT+8', 'yyyy/MM/dd');
+  var timeStr = Utilities.formatDate(now, 'GMT+8', 'HH:mm:ss');
+  var hour = parseInt(Utilities.formatDate(now, 'GMT+8', 'HH'));
+
+  var todayEvents = _GetTodayEventTypes(sheet, dateStr);
+  var eventToRecord = null;
+
+  if (location === NFC_LOCATION_COMPANY_DESK) {
+    var hasArrival = todayEvents.indexOf('上班到達公司座位') !== -1;
+    var hasLeave   = todayEvents.indexOf('準備下班離開座位') !== -1;
+    if (!hasArrival)
+      eventToRecord = '上班到達公司座位';
+    else if (!hasLeave)
+      eventToRecord = '準備下班離開座位';
+    else
+      return new ServerResponse(STATUS_CODE_SUCCESS, '今日公司座位記錄已完整，無需再記錄', '', MESSAGE_TYPE_TEXT);
+
+  } else if (location === NFC_LOCATION_HOME_DOOR) {
+    var hasLeaveHome   = todayEvents.indexOf('準備出門上班') !== -1;
+    var hasArriveHome  = todayEvents.indexOf('下班到家') !== -1;
+    if (!hasLeaveHome)
+      eventToRecord = '準備出門上班';
+    else if (!hasArriveHome)
+      eventToRecord = '下班到家';
+    else
+      return new ServerResponse(STATUS_CODE_SUCCESS, '今日家門口記錄已完整，無需再記錄', '', MESSAGE_TYPE_TEXT);
+
+  } else if (location === NFC_LOCATION_COMPUTER_DESK) {
+    var hasBath      = todayEvents.indexOf('準備洗澡') !== -1;
+    var hasEnterRoom = todayEvents.indexOf('準備進房') !== -1;
+    if (!hasBath)
+      eventToRecord = '準備洗澡';
+    else if (!hasEnterRoom)
+      eventToRecord = '準備進房';
+    else
+      return new ServerResponse(STATUS_CODE_SUCCESS, '今日電腦桌記錄已完整，無需再記錄', '', MESSAGE_TYPE_TEXT);
+
+  } else if (location === NFC_LOCATION_BEDROOM) {
+    if (hour >= 4 && hour < 12) {
+      if (todayEvents.indexOf('起床') !== -1)
+        return new ServerResponse(STATUS_CODE_SUCCESS, '今日已記錄起床時間', '', MESSAGE_TYPE_TEXT);
+      eventToRecord = '起床';
+    } else {
+      if (todayEvents.indexOf('準備睡覺') !== -1)
+        return new ServerResponse(STATUS_CODE_SUCCESS, '今日已記錄準備睡覺時間', '', MESSAGE_TYPE_TEXT);
+      eventToRecord = '準備睡覺';
+    }
+  } else {
+    return new ServerResponse(STATUS_CODE_INVALID, '無效的NFC位置：' + location, '', MESSAGE_TYPE_TEXT);
+  }
+
+  var nextRow = sheet.getLastRow() + 1;
+  sheet.getRange(nextRow, 1).setValue(dateStr);
+  sheet.getRange(nextRow, 2).setValue(timeStr);
+  sheet.getRange(nextRow, 3).setValue(eventToRecord);
+
+  return new ServerResponse(
+    STATUS_CODE_SUCCESS,
+    '已記錄：' + eventToRecord,
+    dateStr + ' ' + timeStr,
+    MESSAGE_TYPE_TEXT);
+}
+
 // 取得待辦事項（含建立時間）
 function Action_GetMemoJson() {
   var items = GetSpecificCurrentSheetItems(SHEET_ITEM_TYPE.DailyMemoItem);

@@ -38,12 +38,20 @@ const DAILY_TIME_EVENT_TYPES = [
   '準備下班離開座位',
   '下班到家',
   '準備洗澡',
+  '準備進房',
   '準備睡覺',
+  '起床',
   '璇璇準備入睡',
   '璇璇睡著',
 ]
 const ACTION_RECORD_BABY_DIAPER_CHANGING_TIME = 'action_record_baby_diaper_changing_time'
 const ACTION_RECORD_BABY_EAT_TIME = 'action_record_baby_eat_time'
+const ACTION_TRIGGER_NFC = 'action_trigger_nfc'
+
+const NFC_LOCATION_COMPANY_DESK   = 'nfc_company_desk'
+const NFC_LOCATION_HOME_DOOR      = 'nfc_home_door'
+const NFC_LOCATION_COMPUTER_DESK  = 'nfc_computer_desk'
+const NFC_LOCATION_BEDROOM        = 'nfc_bedroom'
 
 const MESSAGE_TYPE_TEXT = 'text'
 const MESSAGE_TYPE_CHART = 'chart'
