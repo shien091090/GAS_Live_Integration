@@ -94,6 +94,10 @@ function doGet(e) {
       res = Action_GetMemoJson();
       break;
 
+    case ACTION_GET_BUDGET_TYPES:
+      res = Action_GetBudgetTypes();
+      break;
+
     case ACTION_GET_DASHBOARD_ECONOMY:
       res = Action_GetDashboardEconomy();
       break;

@@ -1027,6 +1027,23 @@ function Action_MarkPurchaseItemBought(itemName) {
   return new ServerResponse(STATUS_CODE_SUCCESS, '已標記為已購買：' + itemName.trim(), itemName.trim(), MESSAGE_TYPE_TEXT);
 }
 
+// 取得預算種類清單（從預算設定分頁 A 欄第2列往下讀到空白）
+function Action_GetBudgetTypes() {
+  var sheet = SpreadsheetApp.getActive().getSheetByName(SHEET_NAME_BUDGET_SETTING);
+  if (!sheet)
+    return new ServerResponse(STATUS_CODE_INVALID, '找不到預算設定分頁', '[]', MESSAGE_TYPE_TEXT);
+
+  var types = [];
+  var row = 2;
+  while (true) {
+    var value = sheet.getRange(row, 1).getValue();
+    if (value === '' || value === null || value === undefined) break;
+    types.push(String(value).trim());
+    row++;
+  }
+  return new ServerResponse(STATUS_CODE_SUCCESS, '取得預算種類成功', JSON.stringify(types), MESSAGE_TYPE_TEXT);
+}
+
 // Dashboard 聚合 action — 經濟狀況頁
 function Action_GetDashboardEconomy() {
   var now = new Date();
@@ -1041,12 +1058,14 @@ function Action_GetDashboardEconomy() {
   var budgetResp = Action_GetBudgetStatus(String(year), String(month));
   var scheduleResp = Action_GetSpecialSchedule();
   var memoResp = Action_GetMemo();
+  var budgetTypesResp = Action_GetBudgetTypes();
 
   var result = {
     items: JSON.parse(itemsResp.responseMsg),
     budget: JSON.parse(budgetResp.responseMsg),
     schedule: JSON.parse(scheduleResp.responseMsg),
-    memo: memoResp.responseMsg
+    memo: memoResp.responseMsg,
+    budgetTypes: JSON.parse(budgetTypesResp.responseMsg)
   };
   return new ServerResponse(STATUS_CODE_SUCCESS, '取得經濟狀況資料成功', JSON.stringify(result), MESSAGE_TYPE_TEXT);
 }
