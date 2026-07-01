@@ -1108,9 +1108,11 @@ function Action_GetDashboardEconomyAllMonths() {
 function Action_GetDashboardFuture() {
   var memoResp = Action_GetMemoJson();
   var purchaseResp = Action_GetPurchaseList();
+  var importantResp = Action_GetImportantSchedule();
   var result = {
     memo: JSON.parse(memoResp.responseMsg),
-    purchase: purchaseResp.statusCode === STATUS_CODE_SUCCESS ? JSON.parse(purchaseResp.responseMsg) : []
+    purchase: purchaseResp.statusCode === STATUS_CODE_SUCCESS ? JSON.parse(purchaseResp.responseMsg) : [],
+    importantSchedule: importantResp.statusCode === STATUS_CODE_SUCCESS ? JSON.parse(importantResp.responseMsg) : []
   };
   return new ServerResponse(STATUS_CODE_SUCCESS, '取得未來安排資料成功', JSON.stringify(result), MESSAGE_TYPE_TEXT);
 }
