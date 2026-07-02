@@ -1,4 +1,4 @@
-
+﻿
 function doGet(e) {
   
   var param = e.parameter;
@@ -80,6 +80,14 @@ function doGet(e) {
 
     case ACTION_RECORD_DAILY_TIME:
       res = Action_RecordDailyTime(param.eventType);
+      break;
+
+    case ACTION_GET_DAILY_TIME_RECORDS:
+      res = Action_GetDailyTimeRecords();
+      break;
+
+    case ACTION_GET_DASHBOARD_STATUS:
+      res = Action_GetDashboardStatus();
       break;
 
     case ACTION_TRIGGER_NFC:

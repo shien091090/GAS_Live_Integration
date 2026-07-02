@@ -1,4 +1,4 @@
-const STATUS_CODE_SUCCESS = 200
+﻿const STATUS_CODE_SUCCESS = 200
 const STATUS_CODE_EMPTY_INPUT = 300
 const STATUS_CODE_INVALID = 301
 
@@ -46,6 +46,8 @@ const DAILY_TIME_EVENT_TYPES = [
 ]
 const ACTION_RECORD_BABY_DIAPER_CHANGING_TIME = 'action_record_baby_diaper_changing_time'
 const ACTION_RECORD_BABY_EAT_TIME = 'action_record_baby_eat_time'
+const ACTION_GET_DAILY_TIME_RECORDS = 'action_get_daily_time_records'
+const ACTION_GET_DASHBOARD_STATUS = 'action_get_dashboard_status'
 const ACTION_TRIGGER_NFC = 'action_trigger_nfc'
 
 const NFC_LOCATION_COMPANY_DESK   = 'nfc_company_desk'

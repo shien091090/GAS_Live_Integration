@@ -1253,3 +1253,36 @@ function ParseAccountingScheduleItem(content) {
   if(!match) return null;
   return { name: match[1], amount: parseInt(match[2].replace('$', '')), category: match[3] || '' };
 }
+// 取得所有日常時間紀錄
+function Action_GetDailyTimeRecords() {
+  var sheet = SpreadsheetApp.getActive().getSheetByName(SHEET_NAME_DAILY_TIME_RECORD);
+  if (!sheet)
+    return new ServerResponse(STATUS_CODE_INVALID, '找不到日常時間紀錄分頁', '[]', MESSAGE_TYPE_TEXT);
+  var lastRow = sheet.getLastRow();
+  if (lastRow < 2)
+    return new ServerResponse(STATUS_CODE_SUCCESS, '無日常時間紀錄', '[]', MESSAGE_TYPE_TEXT);
+  var data = sheet.getRange(2, 1, lastRow - 1, 3).getValues();
+  var records = [];
+  data.forEach(function(row) {
+    if (!row[0] || !row[1] || !row[2]) return;
+    var dateStr = row[0] instanceof Date
+      ? Utilities.formatDate(row[0], 'GMT+8', 'yyyy/MM/dd')
+      : String(row[0]).trim();
+    var timeStr = row[1] instanceof Date
+      ? Utilities.formatDate(row[1], 'GMT+8', 'HH:mm:ss')
+      : String(row[1]).trim();
+    var eventType = String(row[2]).trim();
+    if (dateStr && timeStr && eventType)
+      records.push({ date: dateStr, time: timeStr, eventType: eventType });
+  });
+  return new ServerResponse(STATUS_CODE_SUCCESS, '取得日常時間紀錄成功', JSON.stringify(records), MESSAGE_TYPE_TEXT);
+}
+
+// 近期狀況 dashboard 聚合 action
+function Action_GetDashboardStatus() {
+  var timeRecordsResp = Action_GetDailyTimeRecords();
+  var result = {
+    dailyTimeRecords: JSON.parse(timeRecordsResp.responseMsg)
+  };
+  return new ServerResponse(STATUS_CODE_SUCCESS, '取得近期狀況資料成功', JSON.stringify(result), MESSAGE_TYPE_TEXT);
+}
