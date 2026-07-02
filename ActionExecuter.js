@@ -1332,8 +1332,10 @@ function Action_GetDailyTimeRecords() {
 // 近期狀況 dashboard 聚合 action
 function Action_GetDashboardStatus() {
   var timeRecordsResp = Action_GetDailyTimeRecords();
+  var memoHistoryResp = Action_GetMemoHistory();
   var result = {
-    dailyTimeRecords: JSON.parse(timeRecordsResp.responseMsg)
+    dailyTimeRecords: JSON.parse(timeRecordsResp.responseMsg),
+    memoHistory: JSON.parse(memoHistoryResp.responseMsg)
   };
   return new ServerResponse(STATUS_CODE_SUCCESS, '取得近期狀況資料成功', JSON.stringify(result), MESSAGE_TYPE_TEXT);
 }
