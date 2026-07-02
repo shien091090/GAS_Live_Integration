@@ -984,6 +984,16 @@ function Action_TriggerNfc(location) {
     else
       return new ServerResponse(STATUS_CODE_SUCCESS, '今日電腦桌記錄已完整，無需再記錄', '', MESSAGE_TYPE_TEXT);
 
+  } else if (location === NFC_LOCATION_XUAN_ROOM) {
+    var hasXuanSleepStart = todayEvents.indexOf('璇璇準備入睡') !== -1;
+    var hasXuanSleepEnd   = todayEvents.indexOf('璇璇睡著') !== -1;
+    if (!hasXuanSleepStart)
+      eventToRecord = '璇璇準備入睡';
+    else if (!hasXuanSleepEnd)
+      eventToRecord = '璇璇睡著';
+    else
+      return new ServerResponse(STATUS_CODE_SUCCESS, '今日璇璇房間記錄已完整，無需再記錄', '', MESSAGE_TYPE_TEXT);
+
   } else if (location === NFC_LOCATION_BEDROOM) {
     if (hour >= 4 && hour < 12) {
       var morningEvents = _GetEventsInTimeWindow(sheet, dateStr, 4, 12);

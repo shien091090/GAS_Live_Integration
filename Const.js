@@ -54,6 +54,7 @@ const NFC_LOCATION_COMPANY_DESK   = 'nfc_company_desk'
 const NFC_LOCATION_HOME_DOOR      = 'nfc_home_door'
 const NFC_LOCATION_COMPUTER_DESK  = 'nfc_computer_desk'
 const NFC_LOCATION_BEDROOM        = 'nfc_bedroom'
+const NFC_LOCATION_XUAN_ROOM      = 'nfc_xuan_room'
 
 const MESSAGE_TYPE_TEXT = 'text'
 const MESSAGE_TYPE_CHART = 'chart'
