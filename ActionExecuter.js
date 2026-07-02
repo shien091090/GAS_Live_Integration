@@ -1051,6 +1051,40 @@ function Action_GetMemoJson() {
   return new ServerResponse(STATUS_CODE_SUCCESS, '取得待辦事項成功', JSON.stringify(result), MESSAGE_TYPE_TEXT);
 }
 
+// 取得每日待辦事項分頁的完整歷史原始資料（含已被刪除的舊批次，不經過「僅取最新一批」的邏輯）
+function Action_GetMemoHistory() {
+  var sheet = SpreadsheetApp.getActive().getSheetByName(SHEET_NAME_DAILY_MEMO);
+  if (!sheet)
+    return new ServerResponse(STATUS_CODE_INVALID, '找不到每日待辦事項分頁', '[]', MESSAGE_TYPE_TEXT);
+
+  var lastRow = sheet.getLastRow();
+  if (lastRow < 2)
+    return new ServerResponse(STATUS_CODE_SUCCESS, '無待辦事項歷史紀錄', '[]', MESSAGE_TYPE_TEXT);
+
+  var data = sheet.getRange(2, 1, lastRow - 1, 5).getValues();
+  var records = [];
+  data.forEach(function(row) {
+    var id = row[COLUMN_SETTING_DAILY_MEMO.MemoItemId - 1];
+    if (id === '' || id === null)
+      return;
+
+    var rawModifyTime = row[COLUMN_SETTING_DAILY_MEMO.ModifyTime - 1];
+    var modifyTime = rawModifyTime instanceof Date
+      ? Utilities.formatDate(rawModifyTime, 'GMT+8', 'yyyy/MM/dd HH:mm:ss')
+      : String(rawModifyTime).trim();
+
+    records.push({
+      id: id,
+      number: row[COLUMN_SETTING_DAILY_MEMO.MemoNumber - 1],
+      modifyTime: modifyTime,
+      content: String(row[COLUMN_SETTING_DAILY_MEMO.MemoContent - 1]).trim(),
+      totalCount: row[COLUMN_SETTING_DAILY_MEMO.TotalCount - 1],
+    });
+  });
+
+  return new ServerResponse(STATUS_CODE_SUCCESS, '取得待辦事項歷史紀錄成功', JSON.stringify(records), MESSAGE_TYPE_TEXT);
+}
+
 // 新增待購買項目
 function Action_AddPurchaseItem(itemName) {
   if (!itemName || itemName.trim() === '')
