@@ -1051,7 +1051,10 @@ function Action_GetMemoJson() {
   return new ServerResponse(STATUS_CODE_SUCCESS, '取得待辦事項成功', JSON.stringify(result), MESSAGE_TYPE_TEXT);
 }
 
-// 取得每日待辦事項分頁的完整歷史原始資料（含已被刪除的舊批次，不經過「僅取最新一批」的邏輯）
+// 每次最多讀取的歷史列數（避免分頁列數隨使用時間無限增長，拖垮讀取效能）
+var MEMO_HISTORY_MAX_ROWS = 6000;
+
+// 取得每日待辦事項分頁的近期歷史原始資料（含已被刪除的舊批次，不經過「僅取最新一批」的邏輯）
 function Action_GetMemoHistory() {
   var sheet = SpreadsheetApp.getActive().getSheetByName(SHEET_NAME_DAILY_MEMO);
   if (!sheet)
@@ -1061,7 +1064,11 @@ function Action_GetMemoHistory() {
   if (lastRow < 2)
     return new ServerResponse(STATUS_CODE_SUCCESS, '無待辦事項歷史紀錄', '[]', MESSAGE_TYPE_TEXT);
 
-  var data = sheet.getRange(2, 1, lastRow - 1, 5).getValues();
+  var totalDataRows = lastRow - 1;
+  var readRowCount = Math.min(totalDataRows, MEMO_HISTORY_MAX_ROWS);
+  var startRow = lastRow - readRowCount + 1;
+
+  var data = sheet.getRange(startRow, 1, readRowCount, 5).getValues();
   var records = [];
   data.forEach(function(row) {
     var id = row[COLUMN_SETTING_DAILY_MEMO.MemoItemId - 1];
