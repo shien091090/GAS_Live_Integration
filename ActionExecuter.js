@@ -937,6 +937,50 @@ function _GetEventsInTimeWindow(sheet, dateStr, startHour, endHour) {
   return events;
 }
 
+// 取得某列事件的絕對時間戳記（結合日期欄與時間欄）
+function _GetRowTimestamp(row) {
+  var dateVal = row[0];
+  var timeVal = row[1];
+  var year, month, day;
+  if (dateVal instanceof Date) {
+    year = parseInt(Utilities.formatDate(dateVal, 'GMT+8', 'yyyy'));
+    month = parseInt(Utilities.formatDate(dateVal, 'GMT+8', 'MM')) - 1;
+    day = parseInt(Utilities.formatDate(dateVal, 'GMT+8', 'dd'));
+  } else {
+    var dateParts = String(dateVal).trim().split('/');
+    year = parseInt(dateParts[0]);
+    month = parseInt(dateParts[1]) - 1;
+    day = parseInt(dateParts[2]);
+  }
+  var hour, minute, second;
+  if (timeVal instanceof Date) {
+    hour = parseInt(Utilities.formatDate(timeVal, 'GMT+8', 'HH'));
+    minute = parseInt(Utilities.formatDate(timeVal, 'GMT+8', 'mm'));
+    second = parseInt(Utilities.formatDate(timeVal, 'GMT+8', 'ss'));
+  } else {
+    var timeParts = String(timeVal).trim().split(':');
+    hour = parseInt(timeParts[0]);
+    minute = parseInt(timeParts[1]);
+    second = parseInt(timeParts[2] || 0);
+  }
+  return new Date(year, month, day, hour, minute, second);
+}
+
+// 取得截至 now 為止、過去 N 小時內已紀錄的事件類型清單（跨日）
+function _GetEventTypesInPastHours(sheet, now, hoursBack) {
+  var lastRow = sheet.getLastRow();
+  if (lastRow < 2) return [];
+  var data = sheet.getRange(2, 1, lastRow - 1, 3).getValues();
+  var cutoff = new Date(now.getTime() - hoursBack * 60 * 60 * 1000);
+  var events = [];
+  data.forEach(function(row) {
+    var eventTime = _GetRowTimestamp(row);
+    if (eventTime >= cutoff && eventTime <= now)
+      events.push(String(row[2]).trim());
+  });
+  return events;
+}
+
 // NFC 貼紙觸發 — 依位置執行對應流程
 function Action_TriggerNfc(location) {
   if (!location || location.trim() === '')
@@ -975,14 +1019,15 @@ function Action_TriggerNfc(location) {
       return new ServerResponse(STATUS_CODE_SUCCESS, '今日家門口記錄已完整，無需再記錄', '', MESSAGE_TYPE_TEXT);
 
   } else if (location === NFC_LOCATION_COMPUTER_DESK) {
-    var hasBath      = todayEvents.indexOf('準備洗澡') !== -1;
-    var hasEnterRoom = todayEvents.indexOf('準備進房') !== -1;
+    var recentEvents = _GetEventTypesInPastHours(sheet, now, 12);
+    var hasBath      = recentEvents.indexOf('準備洗澡') !== -1;
+    var hasEnterRoom = recentEvents.indexOf('準備進房') !== -1;
     if (!hasBath)
       eventToRecord = '準備洗澡';
     else if (!hasEnterRoom)
       eventToRecord = '準備進房';
     else
-      return new ServerResponse(STATUS_CODE_SUCCESS, '今日電腦桌記錄已完整，無需再記錄', '', MESSAGE_TYPE_TEXT);
+      return new ServerResponse(STATUS_CODE_SUCCESS, '過去12小時內電腦桌記錄已完整，無需再記錄', '', MESSAGE_TYPE_TEXT);
 
   } else if (location === NFC_LOCATION_XUAN_ROOM) {
     var hasXuanSleepStart = todayEvents.indexOf('璇璇準備入睡') !== -1;
@@ -1052,7 +1097,7 @@ function Action_GetMemoJson() {
 }
 
 // 每次最多讀取的歷史列數（避免分頁列數隨使用時間無限增長，拖垮讀取效能）
-var MEMO_HISTORY_MAX_ROWS = 6000;
+var MEMO_HISTORY_MAX_ROWS = 15000;
 
 // 取得每日待辦事項分頁的近期歷史原始資料（含已被刪除的舊批次，不經過「僅取最新一批」的邏輯）
 function Action_GetMemoHistory() {
