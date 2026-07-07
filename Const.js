@@ -32,8 +32,6 @@ const ACTION_PURCHASE_LIST_ADD = 'action_purchase_list_add'
 const ACTION_PURCHASE_LIST_GET = 'action_purchase_list_get'
 const ACTION_PURCHASE_LIST_DELETE = 'action_purchase_list_delete'
 const ACTION_PURCHASE_LIST_MARK_BOUGHT = 'action_purchase_list_mark_bought'
-const ACTION_SET_MALL_ACTIVITIES = 'action_set_mall_activities'
-const ACTION_GET_MALL_ACTIVITIES = 'action_get_mall_activities'
 
 const DAILY_TIME_EVENT_TYPES = [
   '準備出門上班',
@@ -171,15 +169,6 @@ const SHEET_NAME_PREPARATION_LIST = '物品準備清單'
 const SHEET_NAME_DAILY_TIME_RECORD = '日常時間紀錄'
 const SHEET_NAME_PURCHASE_LIST = '購買清單'
 const SHEET_NAME_IMPORTANT_SCHEDULE = '重要日程'
-const SHEET_NAME_MALL_ACTIVITY = '商場活動'
-
-const COLUMN_SETTING_MALL_ACTIVITY = Object.freeze({
-  MallName: 1,
-  ActivityName: 2,
-  StartDate: 3,
-  EndDate: 4,
-  UpdateTime: 5
-})
 
 const COLUMN_SETTING_BUDGET_SETTING = Object.freeze({
   BudgetType: 1,
