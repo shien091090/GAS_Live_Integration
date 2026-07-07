@@ -812,8 +812,8 @@ function _ComputeBudgetStatusLive(targetYear, targetMonth) {
         spent += parseInt(prize) || 0;
     });
 
-    if (effectiveBudget <= 0 && spent <= 0) continue;
-
+    // 這裡刻意不篩掉「預算=0 且 花費=0」的分類，讓快照能完整保留每個分類當月的狀態；
+    // 真正要不要顯示這種空分類，交給 _FilterActiveCategories 在回傳畫面用資料時決定
     var isOverBudget = spent > effectiveBudget;
     categories.push({
       name: budgetType,
@@ -841,6 +841,29 @@ function _ComputeBudgetStatusLive(targetYear, targetMonth) {
   };
 }
 
+// 過濾掉「預算=0 且 花費=0」的分類（該月完全沒用到、不需要顯示在畫面上），並重算總計
+function _FilterActiveCategories(result) {
+  var filtered = result.categories.filter(function(c) {
+    return c.effectiveBudget > 0 || c.spent > 0;
+  });
+
+  var totalBudget = 0, totalSpent = 0;
+  filtered.forEach(function(c) {
+    totalBudget += c.effectiveBudget;
+    totalSpent += c.spent;
+  });
+
+  return {
+    year: result.year,
+    month: result.month,
+    categories: filtered,
+    totalBudget: totalBudget,
+    totalSpent: totalSpent,
+    totalDiff: totalBudget - totalSpent,
+    totalIsOverBudget: totalSpent > totalBudget
+  };
+}
+
 // 取得指定年月的預算使用狀況：當月即時計算；過去月份優先讀快照，沒有快照才計算並凍結存檔
 function Action_GetBudgetStatus(yearParam, monthParam) {
   var now = new Date();
@@ -852,17 +875,18 @@ function Action_GetBudgetStatus(yearParam, monthParam) {
   if (isPast) {
     var snapshot = _ReadBudgetSnapshot(targetYear, targetMonth);
     if (snapshot)
-      return new ServerResponse(STATUS_CODE_SUCCESS, '取得預算狀態成功（歷史快照）', JSON.stringify(snapshot), MESSAGE_TYPE_TEXT);
+      return new ServerResponse(STATUS_CODE_SUCCESS, '取得預算狀態成功（歷史快照）', JSON.stringify(_FilterActiveCategories(snapshot)), MESSAGE_TYPE_TEXT);
   }
 
   var result = _ComputeBudgetStatusLive(targetYear, targetMonth);
   if (!result)
     return new ServerResponse(STATUS_CODE_INVALID, '找不到預算設定分頁', '', MESSAGE_TYPE_TEXT);
 
+  // 快照要存完整版（含預算=0且花費=0的分類），畫面顯示才用篩選過的版本
   if (isPast)
     _WriteBudgetSnapshot(result);
 
-  return new ServerResponse(STATUS_CODE_SUCCESS, '取得預算狀態成功', JSON.stringify(result), MESSAGE_TYPE_TEXT);
+  return new ServerResponse(STATUS_CODE_SUCCESS, '取得預算狀態成功', JSON.stringify(_FilterActiveCategories(result)), MESSAGE_TYPE_TEXT);
 }
 
 function Action_GetSpecialSchedule() {
