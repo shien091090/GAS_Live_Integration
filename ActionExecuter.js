@@ -677,15 +677,91 @@ function Action_GetAccountPieChart(command) {
   }
 }
 
-function Action_GetBudgetStatus(yearParam, monthParam) {
+// 判斷指定年月是否早於目前的年月（已經過去、可以凍結快照的月份）
+function _IsPastMonth(targetYear, targetMonth) {
+  var now = new Date();
+  var curYear = now.getFullYear();
+  var curMonth = now.getMonth() + 1;
+  return (targetYear < curYear) || (targetYear === curYear && targetMonth < curMonth);
+}
+
+// 讀取指定年月的預算快照，找不到回傳 null
+function _ReadBudgetSnapshot(targetYear, targetMonth) {
+  var sheet = SpreadsheetApp.getActive().getSheetByName(SHEET_NAME_BUDGET_SNAPSHOT);
+  if (!sheet) return null;
+
+  var lastRow = sheet.getLastRow();
+  if (lastRow < 2) return null;
+
+  var data = sheet.getRange(2, 1, lastRow - 1, 9).getValues();
+  var categories = [];
+  data.forEach(function(row) {
+    var y = parseInt(row[COLUMN_SETTING_BUDGET_SNAPSHOT.Year - 1]);
+    var m = parseInt(row[COLUMN_SETTING_BUDGET_SNAPSHOT.Month - 1]);
+    if (y !== targetYear || m !== targetMonth) return;
+
+    var isOverBudgetRaw = row[COLUMN_SETTING_BUDGET_SNAPSHOT.IsOverBudget - 1];
+    var isOverBudget = isOverBudgetRaw === true || String(isOverBudgetRaw).trim().toUpperCase() === 'TRUE';
+
+    categories.push({
+      name: String(row[COLUMN_SETTING_BUDGET_SNAPSHOT.BudgetType - 1]).trim(),
+      spent: parseInt(row[COLUMN_SETTING_BUDGET_SNAPSHOT.Spent - 1]) || 0,
+      effectiveBudget: parseInt(row[COLUMN_SETTING_BUDGET_SNAPSHOT.EffectiveBudget - 1]) || 0,
+      diff: parseInt(row[COLUMN_SETTING_BUDGET_SNAPSHOT.Diff - 1]) || 0,
+      isOverBudget: isOverBudget,
+      overspent: parseInt(row[COLUMN_SETTING_BUDGET_SNAPSHOT.Overspent - 1]) || 0
+    });
+  });
+
+  if (categories.length === 0) return null;
+
+  var totalBudget = 0, totalSpent = 0;
+  categories.forEach(function(c) {
+    totalBudget += c.effectiveBudget;
+    totalSpent += c.spent;
+  });
+
+  return {
+    year: targetYear,
+    month: targetMonth,
+    categories: categories,
+    totalBudget: totalBudget,
+    totalSpent: totalSpent,
+    totalDiff: totalBudget - totalSpent,
+    totalIsOverBudget: totalSpent > totalBudget
+  };
+}
+
+// 把已經算好的過去月份結果寫進快照分頁，找不到分頁時自動建立
+function _WriteBudgetSnapshot(result) {
+  var ss = SpreadsheetApp.getActive();
+  var sheet = ss.getSheetByName(SHEET_NAME_BUDGET_SNAPSHOT);
+  if (!sheet) {
+    sheet = ss.insertSheet(SHEET_NAME_BUDGET_SNAPSHOT);
+    sheet.appendRow(['年', '月', '分類', '花費', '預算', '差額', '是否超支', '超支金額', '快照時間']);
+  }
+
+  if (!result.categories.length) return;
+
+  var now = Utilities.formatDate(new Date(), 'GMT+8', 'yyyy/MM/dd HH:mm:ss');
+  var rows = result.categories.map(function(c) {
+    return [result.year, result.month, c.name, c.spent, c.effectiveBudget, c.diff, c.isOverBudget, c.overspent, now];
+  });
+
+  var nextRow = sheet.getLastRow() + 1;
+  sheet.getRange(nextRow, 1, rows.length, 9).setValues(rows);
+}
+
+// 即時計算指定年月的預算使用狀況（不做任何快照判斷）
+function _ComputeBudgetStatusLive(targetYear, targetMonth) {
   var ss = SpreadsheetApp.getActive();
   var budgetSheet = ss.getSheetByName(SHEET_NAME_BUDGET_SETTING);
-  if (!budgetSheet)
-    return new ServerResponse(STATUS_CODE_INVALID, '找不到預算設定分頁', '', MESSAGE_TYPE_TEXT);
+  if (!budgetSheet) return null;
 
   var budgetLastRow = budgetSheet.getLastRow();
-  if (budgetLastRow < 2)
-    return new ServerResponse(STATUS_CODE_SUCCESS, '無預算資料', '{"categories":[],"totalBudget":0,"totalSpent":0,"totalDiff":0,"totalIsOverBudget":false}', MESSAGE_TYPE_TEXT);
+  if (budgetLastRow < 2) {
+    return { year: targetYear, month: targetMonth, categories: [], totalBudget: 0, totalSpent: 0, totalDiff: 0, totalIsOverBudget: false };
+  }
 
   var budgetData = budgetSheet.getRange(2, 1, budgetLastRow - 1, 17).getValues();
 
@@ -693,10 +769,6 @@ function Action_GetBudgetStatus(yearParam, monthParam) {
   var accountingData = [];
   if (accountingSheet && accountingSheet.getLastRow() >= 2)
     accountingData = accountingSheet.getRange(2, 1, accountingSheet.getLastRow() - 1, 4).getValues();
-
-  var now = new Date();
-  var targetYear = (yearParam && parseInt(yearParam) > 0) ? parseInt(yearParam) : now.getFullYear();
-  var currentMonth = (monthParam && parseInt(monthParam) > 0) ? parseInt(monthParam) : now.getMonth() + 1;
 
   var specialTriples = [
     [COLUMN_SETTING_BUDGET_SETTING.SpecialMonth1, COLUMN_SETTING_BUDGET_SETTING.SpecialAmount1, COLUMN_SETTING_BUDGET_SETTING.SpecialItem1],
@@ -721,7 +793,7 @@ function Action_GetBudgetStatus(yearParam, monthParam) {
     specialTriples.forEach(function(triple) {
       var specialMonth = row[triple[0] - 1];
       var specialAmount = row[triple[1] - 1];
-      if (specialMonth !== '' && parseInt(specialMonth) === currentMonth)
+      if (specialMonth !== '' && parseInt(specialMonth) === targetMonth)
         specialAdjustment += parseInt(specialAmount) || 0;
     });
 
@@ -735,7 +807,7 @@ function Action_GetBudgetStatus(yearParam, monthParam) {
       if (!date || date === '') return;
       var rowDate = new Date(date);
       if (rowDate.getFullYear() === targetYear &&
-          rowDate.getMonth() + 1 === currentMonth &&
+          rowDate.getMonth() + 1 === targetMonth &&
           String(rowBudgetType) === budgetType)
         spent += parseInt(prize) || 0;
     });
@@ -758,15 +830,37 @@ function Action_GetBudgetStatus(yearParam, monthParam) {
     totalSpent += spent;
   }
 
-  var result = {
+  return {
     year: targetYear,
-    month: currentMonth,
+    month: targetMonth,
     categories: categories,
     totalBudget: totalBudget,
     totalSpent: totalSpent,
     totalDiff: totalBudget - totalSpent,
     totalIsOverBudget: totalSpent > totalBudget
   };
+}
+
+// 取得指定年月的預算使用狀況：當月即時計算；過去月份優先讀快照，沒有快照才計算並凍結存檔
+function Action_GetBudgetStatus(yearParam, monthParam) {
+  var now = new Date();
+  var targetYear = (yearParam && parseInt(yearParam) > 0) ? parseInt(yearParam) : now.getFullYear();
+  var targetMonth = (monthParam && parseInt(monthParam) > 0) ? parseInt(monthParam) : now.getMonth() + 1;
+
+  var isPast = _IsPastMonth(targetYear, targetMonth);
+
+  if (isPast) {
+    var snapshot = _ReadBudgetSnapshot(targetYear, targetMonth);
+    if (snapshot)
+      return new ServerResponse(STATUS_CODE_SUCCESS, '取得預算狀態成功（歷史快照）', JSON.stringify(snapshot), MESSAGE_TYPE_TEXT);
+  }
+
+  var result = _ComputeBudgetStatusLive(targetYear, targetMonth);
+  if (!result)
+    return new ServerResponse(STATUS_CODE_INVALID, '找不到預算設定分頁', '', MESSAGE_TYPE_TEXT);
+
+  if (isPast)
+    _WriteBudgetSnapshot(result);
 
   return new ServerResponse(STATUS_CODE_SUCCESS, '取得預算狀態成功', JSON.stringify(result), MESSAGE_TYPE_TEXT);
 }

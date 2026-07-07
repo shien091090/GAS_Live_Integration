@@ -173,6 +173,19 @@ const SHEET_NAME_PREPARATION_LIST = '物品準備清單'
 const SHEET_NAME_DAILY_TIME_RECORD = '日常時間紀錄'
 const SHEET_NAME_PURCHASE_LIST = '購買清單'
 const SHEET_NAME_IMPORTANT_SCHEDULE = '重要日程'
+const SHEET_NAME_BUDGET_SNAPSHOT = '預算快照'
+
+const COLUMN_SETTING_BUDGET_SNAPSHOT = Object.freeze({
+  Year: 1,
+  Month: 2,
+  BudgetType: 3,
+  Spent: 4,
+  EffectiveBudget: 5,
+  Diff: 6,
+  IsOverBudget: 7,
+  Overspent: 8,
+  SnapshotTime: 9
+})
 
 const COLUMN_SETTING_BUDGET_SETTING = Object.freeze({
   BudgetType: 1,
