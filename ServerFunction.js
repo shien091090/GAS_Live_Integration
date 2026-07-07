@@ -142,11 +142,36 @@ function doGet(e) {
       res = Action_MarkPurchaseItemBought(param.itemName);
       break;
 
+    case ACTION_GET_MALL_ACTIVITIES:
+      res = Action_GetMallActivities();
+      break;
+
     case 'action_debug_buy_reminder':
       res = new ServerResponse(STATUS_CODE_SUCCESS, 'debug', JSON.stringify(GetBuyReminderConfigs()), MESSAGE_TYPE_TEXT);
       break;
   }
 
+
+  if (param.format === 'text')
+    return ContentService.createTextOutput(res.responseMsg || '').setMimeType(ContentService.MimeType.TEXT);
+
+  return ContentService.createTextOutput(JSON.stringify(res));
+
+}
+
+// 寫入型 action 走 POST，避免大型 JSON payload 受限於 GET 網址長度
+function doPost(e) {
+
+  var param = e.parameter;
+  var action = param.action;
+  var res = {};
+
+  switch(action) {
+    case ACTION_SET_MALL_ACTIVITIES:
+      var payload = JSON.parse(e.postData.contents);
+      res = Action_SetMallActivities(payload);
+      break;
+  }
 
   if (param.format === 'text')
     return ContentService.createTextOutput(res.responseMsg || '').setMimeType(ContentService.MimeType.TEXT);
