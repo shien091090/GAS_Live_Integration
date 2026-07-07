@@ -127,7 +127,7 @@ function doGet(e) {
       break;
 
     case ACTION_PURCHASE_LIST_ADD:
-      res = Action_AddPurchaseItem(param.itemName);
+      res = Action_AddPurchaseItem(param.itemName, param.category);
       break;
 
     case ACTION_PURCHASE_LIST_GET:

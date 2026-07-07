@@ -122,9 +122,13 @@ const COLUMN_SETTING_ACCOUNTING_STATISTICS = Object.freeze({
 
 const COLUMN_SETTING_PURCHASE_LIST = Object.freeze({
   ItemName: 1,
-  AddTime: 2,
-  BoughtTime: 3
+  Category: 2,
+  AddTime: 3,
+  BoughtTime: 4
 });
+
+const PURCHASE_CATEGORY_SHORT_TERM = '短期'
+const PURCHASE_CATEGORY_LONG_TERM = '長期'
 
 const COLUMN_SETTING_IMPORTANT_SCHEDULE = Object.freeze({
   Name: 1,

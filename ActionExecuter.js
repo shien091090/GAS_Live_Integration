@@ -1138,7 +1138,7 @@ function Action_GetMemoHistory() {
 }
 
 // 新增待購買項目
-function Action_AddPurchaseItem(itemName) {
+function Action_AddPurchaseItem(itemName, category) {
   if (!itemName || itemName.trim() === '')
     return new ServerResponse(STATUS_CODE_INVALID, '請輸入品項名稱', '', MESSAGE_TYPE_TEXT);
 
@@ -1146,10 +1146,15 @@ function Action_AddPurchaseItem(itemName) {
   if (!sheet)
     return new ServerResponse(STATUS_CODE_INVALID, '找不到購買清單分頁', '', MESSAGE_TYPE_TEXT);
 
+  var finalCategory = (category && category.trim() === PURCHASE_CATEGORY_LONG_TERM)
+    ? PURCHASE_CATEGORY_LONG_TERM
+    : PURCHASE_CATEGORY_SHORT_TERM;
+
   var now = new Date();
   var timeStr = Utilities.formatDate(now, 'GMT+8', 'yyyy/MM/dd HH:mm:ss');
   var nextRow = sheet.getLastRow() + 1;
   sheet.getRange(nextRow, COLUMN_SETTING_PURCHASE_LIST.ItemName).setValue(itemName.trim());
+  sheet.getRange(nextRow, COLUMN_SETTING_PURCHASE_LIST.Category).setValue(finalCategory);
   sheet.getRange(nextRow, COLUMN_SETTING_PURCHASE_LIST.AddTime).setValue(timeStr);
 
   return new ServerResponse(STATUS_CODE_SUCCESS, '已新增：' + itemName.trim(), itemName.trim(), MESSAGE_TYPE_TEXT);
@@ -1165,10 +1170,12 @@ function Action_GetPurchaseList() {
   if (lastRow < 2)
     return new ServerResponse(STATUS_CODE_SUCCESS, '取得待購買清單成功', '[]', MESSAGE_TYPE_TEXT);
 
-  var data = sheet.getRange(2, 1, lastRow - 1, 3).getValues();
+  var data = sheet.getRange(2, 1, lastRow - 1, 4).getValues();
   var items = [];
   data.forEach(function(row) {
     var name = String(row[COLUMN_SETTING_PURCHASE_LIST.ItemName - 1]).trim();
+    var categoryRaw = String(row[COLUMN_SETTING_PURCHASE_LIST.Category - 1]).trim();
+    var category = categoryRaw === PURCHASE_CATEGORY_LONG_TERM ? PURCHASE_CATEGORY_LONG_TERM : PURCHASE_CATEGORY_SHORT_TERM;
     var addTimeRaw = row[COLUMN_SETTING_PURCHASE_LIST.AddTime - 1];
     var boughtTimeRaw = row[COLUMN_SETTING_PURCHASE_LIST.BoughtTime - 1];
     var addTime = addTimeRaw instanceof Date
@@ -1178,7 +1185,7 @@ function Action_GetPurchaseList() {
       ? Utilities.formatDate(boughtTimeRaw, 'GMT+8', 'yyyy/MM/dd HH:mm:ss')
       : String(boughtTimeRaw).trim();
     if (name !== '' && boughtTime === '')
-      items.push({ name: name, addTime: addTime });
+      items.push({ name: name, category: category, addTime: addTime });
   });
 
   return new ServerResponse(STATUS_CODE_SUCCESS, '取得待購買清單成功', JSON.stringify(items), MESSAGE_TYPE_TEXT);
@@ -1226,7 +1233,7 @@ function Action_MarkPurchaseItemBought(itemName) {
   if (lastRow < 2)
     return new ServerResponse(STATUS_CODE_INVALID, '購買清單目前為空', '', MESSAGE_TYPE_TEXT);
 
-  var data = sheet.getRange(2, 1, lastRow - 1, 3).getValues();
+  var data = sheet.getRange(2, 1, lastRow - 1, 4).getValues();
   var targetRow = -1;
   for (var i = 0; i < data.length; i++) {
     var name = String(data[i][COLUMN_SETTING_PURCHASE_LIST.ItemName - 1]).trim();
