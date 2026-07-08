@@ -1061,6 +1061,29 @@ function _GetRowTimestamp(row) {
   return new Date(year, month, day, hour, minute, second);
 }
 
+// 取得指定事件類型最近一次（且不晚於 now）的紀錄時間，找不到回傳 null
+function _GetLastEventTimestamp(sheet, eventType, now) {
+  var lastRow = sheet.getLastRow();
+  if (lastRow < 2) return null;
+  var data = sheet.getRange(2, 1, lastRow - 1, 3).getValues();
+  var latest = null;
+  data.forEach(function(row) {
+    if (String(row[2]).trim() !== eventType) return;
+    var eventTime = _GetRowTimestamp(row);
+    if (eventTime > now) return;
+    if (!latest || eventTime > latest) latest = eventTime;
+  });
+  return latest;
+}
+
+// 判斷距離某事件類型最近一次紀錄時間，是否還在冷卻時間（分鐘）內
+function _IsWithinCooldown(sheet, eventType, now, cooldownMinutes) {
+  var lastTime = _GetLastEventTimestamp(sheet, eventType, now);
+  if (!lastTime) return false;
+  var diffMinutes = (now.getTime() - lastTime.getTime()) / (60 * 1000);
+  return diffMinutes < cooldownMinutes;
+}
+
 // 取得截至 now 為止、過去 N 小時內已紀錄的事件類型清單（跨日）
 function _GetEventTypesInPastHours(sheet, now, hoursBack) {
   var lastRow = sheet.getLastRow();
@@ -1098,9 +1121,11 @@ function Action_TriggerNfc(location) {
     var hasLeave   = todayEvents.indexOf('準備下班離開座位') !== -1;
     if (!hasArrival)
       eventToRecord = '上班到達公司座位';
-    else if (!hasLeave)
+    else if (!hasLeave) {
+      if (_IsWithinCooldown(sheet, '上班到達公司座位', now, 30))
+        return new ServerResponse(STATUS_CODE_SUCCESS, '距離上次到達座位記錄不到30分鐘，視為無效觸發', '', MESSAGE_TYPE_TEXT);
       eventToRecord = '準備下班離開座位';
-    else
+    } else
       return new ServerResponse(STATUS_CODE_SUCCESS, '今日公司座位記錄已完整，無需再記錄', '', MESSAGE_TYPE_TEXT);
 
   } else if (location === NFC_LOCATION_HOME_DOOR) {
@@ -1108,9 +1133,11 @@ function Action_TriggerNfc(location) {
     var hasArriveHome  = todayEvents.indexOf('下班到家') !== -1;
     if (!hasLeaveHome)
       eventToRecord = '準備出門上班';
-    else if (!hasArriveHome)
+    else if (!hasArriveHome) {
+      if (_IsWithinCooldown(sheet, '準備出門上班', now, 30))
+        return new ServerResponse(STATUS_CODE_SUCCESS, '距離上次出門記錄不到30分鐘，視為無效觸發', '', MESSAGE_TYPE_TEXT);
       eventToRecord = '下班到家';
-    else
+    } else
       return new ServerResponse(STATUS_CODE_SUCCESS, '今日家門口記錄已完整，無需再記錄', '', MESSAGE_TYPE_TEXT);
 
   } else if (location === NFC_LOCATION_COMPUTER_DESK) {
@@ -1119,9 +1146,11 @@ function Action_TriggerNfc(location) {
     var hasEnterRoom = recentEvents.indexOf('準備進房') !== -1;
     if (!hasBath)
       eventToRecord = '準備洗澡';
-    else if (!hasEnterRoom)
+    else if (!hasEnterRoom) {
+      if (_IsWithinCooldown(sheet, '準備洗澡', now, 30))
+        return new ServerResponse(STATUS_CODE_SUCCESS, '距離上次準備洗澡記錄不到30分鐘，視為無效觸發', '', MESSAGE_TYPE_TEXT);
       eventToRecord = '準備進房';
-    else
+    } else
       return new ServerResponse(STATUS_CODE_SUCCESS, '過去12小時內電腦桌記錄已完整，無需再記錄', '', MESSAGE_TYPE_TEXT);
 
   } else if (location === NFC_LOCATION_XUAN_ROOM) {
@@ -1129,9 +1158,11 @@ function Action_TriggerNfc(location) {
     var hasXuanSleepEnd   = todayEvents.indexOf('璇璇睡著') !== -1;
     if (!hasXuanSleepStart)
       eventToRecord = '璇璇準備入睡';
-    else if (!hasXuanSleepEnd)
+    else if (!hasXuanSleepEnd) {
+      if (_IsWithinCooldown(sheet, '璇璇準備入睡', now, 5))
+        return new ServerResponse(STATUS_CODE_SUCCESS, '距離上次璇璇準備入睡記錄不到5分鐘，視為無效觸發', '', MESSAGE_TYPE_TEXT);
       eventToRecord = '璇璇睡著';
-    else
+    } else
       return new ServerResponse(STATUS_CODE_SUCCESS, '今日璇璇房間記錄已完整，無需再記錄', '', MESSAGE_TYPE_TEXT);
 
   } else if (location === NFC_LOCATION_BEDROOM) {
