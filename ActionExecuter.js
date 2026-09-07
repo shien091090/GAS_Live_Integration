@@ -685,31 +685,59 @@ function _IsPastMonth(targetYear, targetMonth) {
   return (targetYear < curYear) || (targetYear === curYear && targetMonth < curMonth);
 }
 
+// 從記帳分頁的資料中，即時加總指定年/月/分類的花費
+function _SumSpentForCategory(accountingData, targetYear, targetMonth, budgetType) {
+  var spent = 0;
+  accountingData.forEach(function(accRow) {
+    var date = accRow[COLUMN_SETTING_ACCOUNTING.Date - 1];
+    var prize = accRow[COLUMN_SETTING_ACCOUNTING.Prize - 1];
+    var rowBudgetType = accRow[COLUMN_SETTING_ACCOUNTING.BudgetType - 1];
+    if (!date || date === '') return;
+    var rowDate = new Date(date);
+    if (rowDate.getFullYear() === targetYear &&
+        rowDate.getMonth() + 1 === targetMonth &&
+        String(rowBudgetType) === budgetType)
+      spent += parseInt(prize) || 0;
+  });
+  return spent;
+}
+
 // 讀取指定年月的預算快照，找不到回傳 null
+// 只有「預算」是凍結值，花費／差額／是否超支／超支金額一律從記帳分頁即時加總算出，
+// 這樣使用者事後回頭補記過去月份的帳，總覽仍能反映最新花費。
 function _ReadBudgetSnapshot(targetYear, targetMonth) {
-  var sheet = SpreadsheetApp.getActive().getSheetByName(SHEET_NAME_BUDGET_SNAPSHOT);
+  var ss = SpreadsheetApp.getActive();
+  var sheet = ss.getSheetByName(SHEET_NAME_BUDGET_SNAPSHOT);
   if (!sheet) return null;
 
   var lastRow = sheet.getLastRow();
   if (lastRow < 2) return null;
 
-  var data = sheet.getRange(2, 1, lastRow - 1, 9).getValues();
+  var data = sheet.getRange(2, 1, lastRow - 1, 5).getValues();
+
+  var accountingSheet = ss.getSheetByName(SHEET_NAME_ACCOUNTING);
+  var accountingData = [];
+  if (accountingSheet && accountingSheet.getLastRow() >= 2)
+    accountingData = accountingSheet.getRange(2, 1, accountingSheet.getLastRow() - 1, 4).getValues();
+
   var categories = [];
   data.forEach(function(row) {
     var y = parseInt(row[COLUMN_SETTING_BUDGET_SNAPSHOT.Year - 1]);
     var m = parseInt(row[COLUMN_SETTING_BUDGET_SNAPSHOT.Month - 1]);
     if (y !== targetYear || m !== targetMonth) return;
 
-    var isOverBudgetRaw = row[COLUMN_SETTING_BUDGET_SNAPSHOT.IsOverBudget - 1];
-    var isOverBudget = isOverBudgetRaw === true || String(isOverBudgetRaw).trim().toUpperCase() === 'TRUE';
+    var name = String(row[COLUMN_SETTING_BUDGET_SNAPSHOT.BudgetType - 1]).trim();
+    var effectiveBudget = parseInt(row[COLUMN_SETTING_BUDGET_SNAPSHOT.EffectiveBudget - 1]) || 0;
+    var spent = _SumSpentForCategory(accountingData, targetYear, targetMonth, name);
+    var isOverBudget = spent > effectiveBudget;
 
     categories.push({
-      name: String(row[COLUMN_SETTING_BUDGET_SNAPSHOT.BudgetType - 1]).trim(),
-      spent: parseInt(row[COLUMN_SETTING_BUDGET_SNAPSHOT.Spent - 1]) || 0,
-      effectiveBudget: parseInt(row[COLUMN_SETTING_BUDGET_SNAPSHOT.EffectiveBudget - 1]) || 0,
-      diff: parseInt(row[COLUMN_SETTING_BUDGET_SNAPSHOT.Diff - 1]) || 0,
+      name: name,
+      spent: spent,
+      effectiveBudget: effectiveBudget,
+      diff: effectiveBudget - spent,
       isOverBudget: isOverBudget,
-      overspent: parseInt(row[COLUMN_SETTING_BUDGET_SNAPSHOT.Overspent - 1]) || 0
+      overspent: isOverBudget ? spent - effectiveBudget : 0
     });
   });
 
@@ -732,24 +760,25 @@ function _ReadBudgetSnapshot(targetYear, targetMonth) {
   };
 }
 
-// 把已經算好的過去月份結果寫進快照分頁，找不到分頁時自動建立
+// 把過去月份的預算凍結存檔，找不到分頁時自動建立。只存「預算」，花費／差額／是否超支／
+// 超支金額不存——這幾個值一律由 _ReadBudgetSnapshot 從記帳分頁即時算。
 function _WriteBudgetSnapshot(result) {
   var ss = SpreadsheetApp.getActive();
   var sheet = ss.getSheetByName(SHEET_NAME_BUDGET_SNAPSHOT);
   if (!sheet) {
     sheet = ss.insertSheet(SHEET_NAME_BUDGET_SNAPSHOT);
-    sheet.appendRow(['年', '月', '分類', '花費', '預算', '差額', '是否超支', '超支金額', '快照時間']);
+    sheet.appendRow(['年', '月', '分類', '預算', '快照時間']);
   }
 
   if (!result.categories.length) return;
 
   var now = Utilities.formatDate(new Date(), 'GMT+8', 'yyyy/MM/dd HH:mm:ss');
   var rows = result.categories.map(function(c) {
-    return [result.year, result.month, c.name, c.spent, c.effectiveBudget, c.diff, c.isOverBudget, c.overspent, now];
+    return [result.year, result.month, c.name, c.effectiveBudget, now];
   });
 
   var nextRow = sheet.getLastRow() + 1;
-  sheet.getRange(nextRow, 1, rows.length, 9).setValues(rows);
+  sheet.getRange(nextRow, 1, rows.length, 5).setValues(rows);
 }
 
 // 即時計算指定年月的預算使用狀況（不做任何快照判斷）
@@ -799,18 +828,7 @@ function _ComputeBudgetStatusLive(targetYear, targetMonth) {
 
     var effectiveBudget = baseBudget + specialAdjustment;
 
-    var spent = 0;
-    accountingData.forEach(function(accRow) {
-      var date = accRow[COLUMN_SETTING_ACCOUNTING.Date - 1];
-      var prize = accRow[COLUMN_SETTING_ACCOUNTING.Prize - 1];
-      var rowBudgetType = accRow[COLUMN_SETTING_ACCOUNTING.BudgetType - 1];
-      if (!date || date === '') return;
-      var rowDate = new Date(date);
-      if (rowDate.getFullYear() === targetYear &&
-          rowDate.getMonth() + 1 === targetMonth &&
-          String(rowBudgetType) === budgetType)
-        spent += parseInt(prize) || 0;
-    });
+    var spent = _SumSpentForCategory(accountingData, targetYear, targetMonth, budgetType);
 
     // 只要是「預算設定」表中有定義的分類就一併列出，不因為預算=0且花費=0而被排除
     var isOverBudget = spent > effectiveBudget;

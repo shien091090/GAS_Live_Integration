@@ -175,16 +175,14 @@ const SHEET_NAME_PURCHASE_LIST = '購買清單'
 const SHEET_NAME_IMPORTANT_SCHEDULE = '重要日程'
 const SHEET_NAME_BUDGET_SNAPSHOT = '預算快照'
 
+// 只有「預算」是真的凍結；花費／差額／是否超支／超支金額一律從記帳分頁即時加總算出，
+// 因為使用者仍會回頭補記過去月份的帳，凍結花費會讓補記的帳永遠反映不到總覽上。
 const COLUMN_SETTING_BUDGET_SNAPSHOT = Object.freeze({
   Year: 1,
   Month: 2,
   BudgetType: 3,
-  Spent: 4,
-  EffectiveBudget: 5,
-  Diff: 6,
-  IsOverBudget: 7,
-  Overspent: 8,
-  SnapshotTime: 9
+  EffectiveBudget: 4,
+  SnapshotTime: 5
 })
 
 const COLUMN_SETTING_BUDGET_SETTING = Object.freeze({
