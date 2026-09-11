@@ -126,6 +126,10 @@ function doGet(e) {
       res = Action_GetDashboardFuture();
       break;
 
+    case ACTION_GET_STOMACH_RECORDS:
+      res = Action_GetStomachRecords();
+      break;
+
     case ACTION_PURCHASE_LIST_ADD:
       res = Action_AddPurchaseItem(param.itemName, param.category);
       break;

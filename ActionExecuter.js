@@ -1525,6 +1525,35 @@ function Action_GetDailyTimeRecords() {
   return new ServerResponse(STATUS_CODE_SUCCESS, '取得日常時間紀錄成功', JSON.stringify(records), MESSAGE_TYPE_TEXT);
 }
 
+// 取得胃病紀錄(A:日期 B:餐點概述 C:餐別 D:重量 E:餐前感覺 F:餐後感覺)
+// 感覺欄維持中文原樣傳出, 評分交給 python 端計算, 改公式不必重新部署 GAS
+function Action_GetStomachRecords() {
+  var sheet = SpreadsheetApp.getActive().getSheetByName(SHEET_NAME_STOMACH_RECORD);
+  if (!sheet)
+    return new ServerResponse(STATUS_CODE_INVALID, '找不到胃病紀錄分頁', '[]', MESSAGE_TYPE_TEXT);
+  var lastRow = sheet.getLastRow();
+  if (lastRow < 2)
+    return new ServerResponse(STATUS_CODE_SUCCESS, '無胃病紀錄', '[]', MESSAGE_TYPE_TEXT);
+  var data = sheet.getRange(2, 1, lastRow - 1, 6).getValues();
+  var records = [];
+  data.forEach(function(row) {
+    if (!row[0]) return;
+    var dateStr = row[0] instanceof Date
+      ? Utilities.formatDate(row[0], 'GMT+8', 'yyyy/MM/dd')
+      : String(row[0]).trim();
+    if (!dateStr) return;
+    records.push({
+      date: dateStr,
+      summary: String(row[1]).trim(),
+      mealType: String(row[2]).trim(),
+      weight: row[3],
+      before: String(row[4]).trim(),
+      after: String(row[5]).trim()
+    });
+  });
+  return new ServerResponse(STATUS_CODE_SUCCESS, '取得胃病紀錄成功', JSON.stringify(records), MESSAGE_TYPE_TEXT);
+}
+
 // 近期狀況 dashboard 聚合 action
 function Action_GetDashboardStatus() {
   var timeRecordsResp = Action_GetDailyTimeRecords();
