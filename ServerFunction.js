@@ -1,5 +1,31 @@
 ﻿
 function doGet(e) {
+  try {
+    return _ExecuteAction(e);
+  } catch (err) {
+    // 沒有這層 try/catch 的話, GAS 會回傳 HTML 錯誤頁而不是 JSON,
+    // Python 端 json.loads 直接炸掉, LINE 就完全收不到回覆
+    return _BuildErrorOutput(e, err);
+  }
+}
+
+function _BuildErrorOutput(e, err) {
+  var detail = (err && err.message) ? err.message : String(err);
+  console.error(`doGet failed: ${(err && err.stack) ? err.stack : err}`);
+
+  if (e && e.parameter && e.parameter.format === 'text')
+    return ContentService.createTextOutput(detail).setMimeType(ContentService.MimeType.TEXT);
+
+  var errRes = new ServerResponse(
+    STATUS_CODE_BACKEND_ERROR,
+    '【後端異常】\n指令可能已經生效, 請到試算表確認',
+    detail,
+    MESSAGE_TYPE_TEXT);
+
+  return ContentService.createTextOutput(JSON.stringify(errRes));
+}
+
+function _ExecuteAction(e) {
   
   var param = e.parameter;
   var action = param.action;

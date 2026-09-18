@@ -1,6 +1,7 @@
 ﻿const STATUS_CODE_SUCCESS = 200
 const STATUS_CODE_EMPTY_INPUT = 300
 const STATUS_CODE_INVALID = 301
+const STATUS_CODE_BACKEND_ERROR = 500
 
 const ACTION_MEMO_ADD = 'action_memo_add'
 const ACTION_MEMO_REMOVE = 'action_memo_remove'

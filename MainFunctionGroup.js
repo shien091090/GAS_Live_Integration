@@ -1,4 +1,4 @@
-function OnAnyCellValueChanged() {
+﻿function OnAnyCellValueChanged() {
   console.log('OnAnyCellValueChanged');
   if(IS_AUTO_SET_DATE)
     AutoWriteInDateWhenAddItem()
@@ -54,8 +54,14 @@ function KeepAccount(accountItemName, prize, budgetType = '') {
     budgetTypeCell.setValue(budgetType);
   }
 
-  SpreadsheetApp.getActiveSheet().setActiveSelection(accountItemCell);
-  OnAnyCellValueChanged();
+  // getActiveSheet() 在 web app 情境下拿到的是「這份文件最後被點開的分頁」,
+  // 只要有人用瀏覽器切到別的分頁, 這裡就會拋例外——而此時帳已經寫進去了,
+  // 造成「記帳成功但 LINE 不回訊息」。web app 沒有使用者游標, 不需要設選取範圍。
+  var activeSheet = SpreadsheetApp.getActiveSheet();
+  if (activeSheet.getName() === SHEET_NAME_ACCOUNTING) {
+    activeSheet.setActiveSelection(accountItemCell);
+    OnAnyCellValueChanged();
+  }
 }
 
 //檢查週期類別名稱是否有效
