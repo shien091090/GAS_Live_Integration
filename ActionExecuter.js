@@ -494,11 +494,11 @@ function Action_Buy(accountItemName, numberText, budgetType = '') {
 }
 
 //取得記帳項目列表（可選：起始日期、結束日期、分類）
-function Action_GetAccountingItems(startDateStr, endDateStr, budgetTypesStr) {
-  var targetSheet = SpreadsheetApp.getActive().getSheetByName(SHEET_NAME_ACCOUNTING);
-  var lastRow = targetSheet.getLastRow();
+//preloaded: 由 dashboard 聚合 action 預先讀好的分頁資料，避免每個月份重讀一次記帳分頁
+function Action_GetAccountingItems(startDateStr, endDateStr, budgetTypesStr, preloaded) {
+  var values = preloaded ? preloaded.accounting : _ReadSheetRows(SHEET_NAME_ACCOUNTING, 5);
 
-  if(lastRow < 2)
+  if(!values || values.length === 0)
     return new ServerResponse(STATUS_CODE_SUCCESS, 'success', JSON.stringify([]), MESSAGE_TYPE_TEXT);
 
   var startDate = (startDateStr && startDateStr != '') ? new Date(startDateStr) : null;
@@ -511,9 +511,6 @@ function Action_GetAccountingItems(startDateStr, endDateStr, budgetTypesStr) {
   var budgetTypes = [];
   if(budgetTypesStr && budgetTypesStr.trim() != '')
     budgetTypes = budgetTypesStr.split(',').map(function(s) { return s.trim(); }).filter(function(s) { return s != ''; });
-
-  var dataRange = targetSheet.getRange(2, 1, lastRow - 1, 5);
-  var values = dataRange.getValues();
 
   var results = [];
   values.forEach(function(row) {
@@ -685,40 +682,43 @@ function _IsPastMonth(targetYear, targetMonth) {
   return (targetYear < curYear) || (targetYear === curYear && targetMonth < curMonth);
 }
 
+// 讀取分頁第 2 列起的資料；分頁不存在回傳 null，沒有資料列回傳 []
+function _ReadSheetRows(sheetName, numColumns) {
+  var sheet = SpreadsheetApp.getActive().getSheetByName(sheetName);
+  if (!sheet) return null;
+  var lastRow = sheet.getLastRow();
+  if (lastRow < 2) return [];
+  return sheet.getRange(2, 1, lastRow - 1, numColumns).getValues();
+}
+
 // 從記帳分頁的資料中，即時加總指定年/月/分類的花費
+// 第一次呼叫時把整份記帳資料依「年-月-分類」加總成索引並掛在資料陣列上，之後同一份資料直接查表，
+// 不必每個分類、每個月份都把整張記帳表掃一遍
 function _SumSpentForCategory(accountingData, targetYear, targetMonth, budgetType) {
-  var spent = 0;
-  accountingData.forEach(function(accRow) {
-    var date = accRow[COLUMN_SETTING_ACCOUNTING.Date - 1];
-    var prize = accRow[COLUMN_SETTING_ACCOUNTING.Prize - 1];
-    var rowBudgetType = accRow[COLUMN_SETTING_ACCOUNTING.BudgetType - 1];
-    if (!date || date === '') return;
-    var rowDate = new Date(date);
-    if (rowDate.getFullYear() === targetYear &&
-        rowDate.getMonth() + 1 === targetMonth &&
-        String(rowBudgetType) === budgetType)
-      spent += parseInt(prize) || 0;
-  });
-  return spent;
+  if (!accountingData._spentIndex) {
+    var index = {};
+    accountingData.forEach(function(accRow) {
+      var date = accRow[COLUMN_SETTING_ACCOUNTING.Date - 1];
+      var prize = accRow[COLUMN_SETTING_ACCOUNTING.Prize - 1];
+      var rowBudgetType = accRow[COLUMN_SETTING_ACCOUNTING.BudgetType - 1];
+      if (!date || date === '') return;
+      var rowDate = new Date(date);
+      var key = rowDate.getFullYear() + '-' + (rowDate.getMonth() + 1) + '-' + String(rowBudgetType);
+      index[key] = (index[key] || 0) + (parseInt(prize) || 0);
+    });
+    accountingData._spentIndex = index;
+  }
+  return accountingData._spentIndex[targetYear + '-' + targetMonth + '-' + budgetType] || 0;
 }
 
 // 讀取指定年月的預算快照，找不到回傳 null
 // 只有「預算」是凍結值，花費／差額／是否超支／超支金額一律從記帳分頁即時加總算出，
 // 這樣使用者事後回頭補記過去月份的帳，總覽仍能反映最新花費。
-function _ReadBudgetSnapshot(targetYear, targetMonth) {
-  var ss = SpreadsheetApp.getActive();
-  var sheet = ss.getSheetByName(SHEET_NAME_BUDGET_SNAPSHOT);
-  if (!sheet) return null;
+function _ReadBudgetSnapshot(targetYear, targetMonth, preloaded) {
+  var data = preloaded ? preloaded.snapshot : _ReadSheetRows(SHEET_NAME_BUDGET_SNAPSHOT, 5);
+  if (!data || data.length === 0) return null;
 
-  var lastRow = sheet.getLastRow();
-  if (lastRow < 2) return null;
-
-  var data = sheet.getRange(2, 1, lastRow - 1, 5).getValues();
-
-  var accountingSheet = ss.getSheetByName(SHEET_NAME_ACCOUNTING);
-  var accountingData = [];
-  if (accountingSheet && accountingSheet.getLastRow() >= 2)
-    accountingData = accountingSheet.getRange(2, 1, accountingSheet.getLastRow() - 1, 4).getValues();
+  var accountingData = (preloaded ? preloaded.accounting : _ReadSheetRows(SHEET_NAME_ACCOUNTING, 4)) || [];
 
   var categories = [];
   data.forEach(function(row) {
@@ -782,22 +782,15 @@ function _WriteBudgetSnapshot(result) {
 }
 
 // 即時計算指定年月的預算使用狀況（不做任何快照判斷）
-function _ComputeBudgetStatusLive(targetYear, targetMonth) {
-  var ss = SpreadsheetApp.getActive();
-  var budgetSheet = ss.getSheetByName(SHEET_NAME_BUDGET_SETTING);
-  if (!budgetSheet) return null;
+function _ComputeBudgetStatusLive(targetYear, targetMonth, preloaded) {
+  var budgetData = preloaded ? preloaded.budgetSetting : _ReadSheetRows(SHEET_NAME_BUDGET_SETTING, 17);
+  if (!budgetData) return null;
 
-  var budgetLastRow = budgetSheet.getLastRow();
-  if (budgetLastRow < 2) {
+  if (budgetData.length === 0) {
     return { year: targetYear, month: targetMonth, categories: [], totalBudget: 0, totalSpent: 0, totalDiff: 0, totalIsOverBudget: false };
   }
 
-  var budgetData = budgetSheet.getRange(2, 1, budgetLastRow - 1, 17).getValues();
-
-  var accountingSheet = ss.getSheetByName(SHEET_NAME_ACCOUNTING);
-  var accountingData = [];
-  if (accountingSheet && accountingSheet.getLastRow() >= 2)
-    accountingData = accountingSheet.getRange(2, 1, accountingSheet.getLastRow() - 1, 4).getValues();
+  var accountingData = (preloaded ? preloaded.accounting : _ReadSheetRows(SHEET_NAME_ACCOUNTING, 4)) || [];
 
   var specialTriples = [
     [COLUMN_SETTING_BUDGET_SETTING.SpecialMonth1, COLUMN_SETTING_BUDGET_SETTING.SpecialAmount1, COLUMN_SETTING_BUDGET_SETTING.SpecialItem1],
@@ -861,7 +854,7 @@ function _ComputeBudgetStatusLive(targetYear, targetMonth) {
 // 取得指定年月的預算使用狀況：當月即時計算；過去月份優先讀快照，沒有快照才計算並凍結存檔
 // 判斷要不要列出某分類，不是看花費或預算是否為0，而是看它是否為「預算設定」表中有定義的預算種類，
 // 所以這裡不再對 categories 做任何篩選，_ComputeBudgetStatusLive / _ReadBudgetSnapshot 回傳的就是完整清單
-function Action_GetBudgetStatus(yearParam, monthParam) {
+function Action_GetBudgetStatus(yearParam, monthParam, preloaded) {
   var now = new Date();
   var targetYear = (yearParam && parseInt(yearParam) > 0) ? parseInt(yearParam) : now.getFullYear();
   var targetMonth = (monthParam && parseInt(monthParam) > 0) ? parseInt(monthParam) : now.getMonth() + 1;
@@ -869,12 +862,12 @@ function Action_GetBudgetStatus(yearParam, monthParam) {
   var isPast = _IsPastMonth(targetYear, targetMonth);
 
   if (isPast) {
-    var snapshot = _ReadBudgetSnapshot(targetYear, targetMonth);
+    var snapshot = _ReadBudgetSnapshot(targetYear, targetMonth, preloaded);
     if (snapshot)
       return new ServerResponse(STATUS_CODE_SUCCESS, '取得預算狀態成功（歷史快照）', JSON.stringify(snapshot), MESSAGE_TYPE_TEXT);
   }
 
-  var result = _ComputeBudgetStatusLive(targetYear, targetMonth);
+  var result = _ComputeBudgetStatusLive(targetYear, targetMonth, preloaded);
   if (!result)
     return new ServerResponse(STATUS_CODE_INVALID, '找不到預算設定分頁', '', MESSAGE_TYPE_TEXT);
 
@@ -1449,13 +1442,20 @@ function Action_GetDashboardEconomyAllMonths() {
   var currentMonth = parseInt(Utilities.formatDate(now, 'GMT+8', 'MM'));
   var pad = function(n) { return ('0' + n).slice(-2); };
 
+  // 每個月份共用同一份分頁資料，整個請求每張分頁只讀一次
+  var preloaded = {
+    accounting: _ReadSheetRows(SHEET_NAME_ACCOUNTING, 5),
+    snapshot: _ReadSheetRows(SHEET_NAME_BUDGET_SNAPSHOT, 5),
+    budgetSetting: _ReadSheetRows(SHEET_NAME_BUDGET_SETTING, 17)
+  };
+
   var months = [];
   for (var m = 1; m <= currentMonth; m++) {
     var lastDay = new Date(year, m, 0).getDate();
     var startDate = year + '/' + pad(m) + '/01';
     var endDate = year + '/' + pad(m) + '/' + pad(lastDay);
-    var itemsResp = Action_GetAccountingItems(startDate, endDate);
-    var budgetResp = Action_GetBudgetStatus(String(year), String(m));
+    var itemsResp = Action_GetAccountingItems(startDate, endDate, '', preloaded);
+    var budgetResp = Action_GetBudgetStatus(String(year), String(m), preloaded);
     months.push({
       month: m,
       items: JSON.parse(itemsResp.responseMsg),
